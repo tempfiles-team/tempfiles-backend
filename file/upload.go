@@ -14,12 +14,8 @@ import (
 func Upload(objectName, filePath, contentType string) (fiber.Map, error) {
 	ctx := context.Background()
 
-	// Make a new bucket called dev-minio.
-	bucketName := os.Getenv("MINIO_BUCKET")
-	log.Printf("objectName: %s, filePath: %s, contentType: %s", objectName, filePath, contentType)
-
 	// Upload the zip file with FPutObject
-	info, err := MinioClient.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
+	info, err := MinioClient.FPutObject(ctx, BucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		return nil, err
 	}

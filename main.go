@@ -27,6 +27,8 @@ func main() {
 	})
 
 	app.Post("/upload", upload)
+	app.Get("/list", list)
+	app.Delete("/delete/:filename", delete)
 
 	log.Fatal(app.Listen(":3000"))
 }
@@ -39,6 +41,7 @@ func upload(c *fiber.Ctx) error {
 			"message": "The file field of multipart is required.",
 		})
 	}
+
 	tempfilePath := fmt.Sprintf("./%s/%s", tempfile, data.Filename)
 	if err := c.SaveFile(data, tempfilePath); err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -55,6 +58,27 @@ func upload(c *fiber.Ctx) error {
 	if err := os.Remove(tempfilePath); err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Error while remove file.",
+		})
+	}
+	return c.JSON(result)
+}
+
+func list(c *fiber.Ctx) error {
+	result, err := file.List()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio list error",
+		})
+	}
+	return c.JSON(result)
+}
+
+func delete(c *fiber.Ctx) error {
+	fileName := c.Params("filename")
+	result, err := file.Delete(fileName)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio delete error",
 		})
 	}
 	return c.JSON(result)
