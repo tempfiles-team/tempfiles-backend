@@ -29,6 +29,7 @@ func main() {
 	app.Post("/upload", upload)
 	app.Get("/list", list)
 	app.Delete("/delete/:filename", delete)
+	app.Get("/dl/:filename", download)
 
 	log.Fatal(app.Listen(":3000"))
 }
@@ -82,4 +83,18 @@ func delete(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(result)
+}
+
+func download(c *fiber.Ctx) error {
+	fileName := c.Params("filename")
+	filePath, err := file.Download(fileName)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio download error",
+		})
+	}
+
+	defer os.Remove(filePath)
+
+	return c.SendFile(filePath)
 }
