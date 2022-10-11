@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempfiles-backend-deploy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tempfiles-backend
+  template:
+    metadata:
+      name: tempfiles-backend-pod
+      labels:
+        app: tf-backpod
+    spec:
+      containers:
+      - name: tempfiles-backend-container
+        image: minpeter/tempfiles-backend
+        ports:
+        - containerPort: 3000
+          name: tf-backend-port
