@@ -5,7 +5,7 @@ metadata:
 spec:
   ports:
     - name: tf-backend-svc-port
-      port: 3000
+      port: 80
       targetPort: tf-backend-port
   selector:
     app: tf-backpod
