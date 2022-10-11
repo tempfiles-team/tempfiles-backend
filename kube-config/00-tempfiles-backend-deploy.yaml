@@ -6,7 +6,7 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: tempfiles-backend
+      app: tf-backpod
   template:
     metadata:
       name: tempfiles-backend-pod
