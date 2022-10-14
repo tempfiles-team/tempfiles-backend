@@ -9,6 +9,6 @@ COPY *.go ./
 
 RUN go build -o ./tempfile-backend
 
-EXPOSE 3000
+EXPOSE 5000
 
 CMD [ "./tempfile-backend" ]

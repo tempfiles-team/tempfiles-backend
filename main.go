@@ -31,7 +31,7 @@ func main() {
 	app.Delete("/delete/:filename", delete)
 	app.Get("/dl/:filename", download)
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":5000"))
 }
 
 func upload(c *fiber.Ctx) error {

@@ -17,5 +17,5 @@ spec:
       - name: tempfiles-backend-container
         image: minpeter/tempfiles-backend
         ports:
-        - containerPort: 3000
+        - containerPort: 5000
           name: tf-backend-port
