@@ -6,13 +6,20 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/minpeter/tempfiles-backend/file"
 )
 
 func main() {
 
+	VER := 1.1
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
 
 	var err error
 	file.MinioClient, err = file.Connection()
@@ -22,7 +29,8 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"message": "api is working normally :)",
+			"message":    "api is working normally :)",
+			"apiVersion": VER,
 		})
 	})
 
