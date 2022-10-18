@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math"
 	"os"
@@ -47,30 +46,35 @@ func main() {
 }
 
 func upload(c *fiber.Ctx) error {
-	tempfile := os.Getenv("BACKEND_TEMPPATH")
 	data, err := c.FormFile("file")
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "The file field of multipart is required.",
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
 		})
 	}
 
-	tempfilePath := fmt.Sprintf("./%s/%s", tempfile, data.Filename)
-	if err := c.SaveFile(data, tempfilePath); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "Error while saving file.",
+	// Get Buffer from file
+	buffer, err := data.Open()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status": "can't chage file to buffer",
+			"error":  err.Error(),
 		})
 	}
+	defer buffer.Close()
 
-	result, err := file.Upload(data.Filename, tempfilePath, data.Header["Content-Type"][0])
+	objectName := data.Filename
+	fileBuffer := buffer
+	contentType := data.Header["Content-Type"][0]
+	fileSize := data.Size
+
+	result, err := file.Upload(objectName, contentType, fileBuffer, fileSize)
+
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
-			"message": "minio upload error",
-		})
-	}
-	if err := os.Remove(tempfilePath); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "Error while remove file.",
+			"status": "minio upload error",
+			"error":  err.Error(),
 		})
 	}
 	return c.JSON(result)

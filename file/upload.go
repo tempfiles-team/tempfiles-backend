@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -10,12 +11,11 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-// MinioConnection func for opening minio connection.
-func Upload(objectName, filePath, contentType string) (fiber.Map, error) {
+func Upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64) (fiber.Map, error) {
 	ctx := context.Background()
 
 	// Upload the zip file with FPutObject
-	info, err := MinioClient.FPutObject(ctx, BucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
+	info, err := MinioClient.PutObject(ctx, BucketName, objectName, fileBuffer, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		return nil, err
 	}
