@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: tempfiles-backend-config
+
+data:
+  MINIO_ENDPOINT: "tempfiles-minio-svc:9000"
+  MINIO_ACCESSKEY: "minio"
+  MINIO_SECRETKEY: "minio123"
+  MINIO_USESSL: "False"
+  MINIO_BUCKET: "tempfiles-bucket"
+  BACKEND_BASEURL: "https://tfb.minpeter.cf"

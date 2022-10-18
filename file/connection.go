@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -17,8 +18,7 @@ func Connection() (*minio.Client, error) {
 	endpoint := os.Getenv("MINIO_ENDPOINT")
 	accessKeyID := os.Getenv("MINIO_ACCESSKEY")
 	secretAccessKey := os.Getenv("MINIO_SECRETKEY")
-	location := os.Getenv("MINIO_LOCATION")
-	useSSL := true
+	useSSL, _ := strconv.ParseBool(os.Getenv("MINIO_USESSL"))
 
 	// Initialize minio client object.
 	minioClient, err := minio.New(endpoint, &minio.Options{
@@ -31,7 +31,7 @@ func Connection() (*minio.Client, error) {
 
 	// Make a new bucket called mymusic.
 
-	err = minioClient.MakeBucket(ctx, BucketName, minio.MakeBucketOptions{Region: location})
+	err = minioClient.MakeBucket(ctx, BucketName, minio.MakeBucketOptions{})
 	if err != nil {
 		// Check to see if we already own this bucket (which happens if you run this twice)
 		exists, errBucketExists := minioClient.BucketExists(ctx, BucketName)

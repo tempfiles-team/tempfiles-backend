@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tempfiles-minio-pvc
+spec:
+  storageClassName: openebs-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempfiles-minio-deploy
+
+spec:
+  selector:
+    matchLabels:
+      app: tf-miniopod
+
+  strategy:
+    type: Recreate
+
+  template:
+    metadata:
+      labels:
+        app: tf-miniopod
+
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: tempfiles-minio-pvc
+
+      containers:
+      - name: tempfiles-minio-container
+        image: minio/minio:latest
+        args:
+        - server
+        - /storage
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: "minio"
+        - name: MINIO_SECRET_KEY
+          value: "minio123"
+        ports:
+        - containerPort: 9000
+          name: tf-minio-port
+        volumeMounts:
+        - name: storage
+          mountPath: "/storage"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempfiles-minio-svc
+spec:
+  type: ClusterIP
+  ports:
+    - name: tf-minio-svc-port
+      port: 9000
+      targetPort: tf-minio-port
+  selector:
+    app: tf-miniopod

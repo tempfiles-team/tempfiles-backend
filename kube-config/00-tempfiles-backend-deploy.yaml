@@ -16,6 +16,9 @@ spec:
       containers:
       - name: tempfiles-backend-container
         image: minpeter/tempfiles-backend
+        envFrom:
+        - configMapRef:
+            name: tempfiles-backend-config
         ports:
         - containerPort: 5000
           name: tf-backend-port
