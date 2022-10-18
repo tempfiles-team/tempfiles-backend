@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,10 @@ import (
 func main() {
 
 	VER := 1.1
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		AppName:   "tempfiles-backend",
+		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
+	})
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
