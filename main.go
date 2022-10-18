@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	VER := 1.1
+	VER := "1.1.2"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
