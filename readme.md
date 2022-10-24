@@ -1,6 +1,6 @@
 ## tempfiles-backend
 
-frontend - https://github.com/ananjaemin/tempfiles
+frontend - https://github.com/ananjaemin/tempfiles-frontend
 
 Go로 제작된 간단한 minio restapi endpoint
 golang minio restapi wrapper
