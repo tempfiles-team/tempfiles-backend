@@ -105,7 +105,7 @@ func delete(c *fiber.Ctx) error {
 
 func download(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
-	filePath, err := file.Download(fileName)
+	filePath, fileName, err := file.Download(fileName)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio download error",
@@ -119,7 +119,7 @@ func download(c *fiber.Ctx) error {
 
 func view(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
-	filePath, err := file.Download(fileName)
+	filePath, _, err := file.Download(fileName)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio download error",
