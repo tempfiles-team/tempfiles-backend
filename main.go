@@ -113,5 +113,5 @@ func download(c *fiber.Ctx) error {
 
 	defer os.Remove(filePath)
 
-	return c.SendFile(filePath)
+	return c.Download(filePath, fileName)
 }
