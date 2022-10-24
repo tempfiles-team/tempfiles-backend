@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	VER := "1.1.4"
+	VER := "1.1.5"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
@@ -40,7 +40,7 @@ func main() {
 
 	app.Post("/upload", upload)
 	app.Get("/list", list)
-	app.Delete("/delete/:filename", delete)
+	app.Delete("/del/:filename", delete)
 	app.Get("/dl/:filename", download)
 	app.Get("/view/:filename", view)
 
