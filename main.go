@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	VER := "1.1.3"
+	VER := "1.1.4"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
@@ -128,5 +128,5 @@ func view(c *fiber.Ctx) error {
 
 	defer os.Remove(filePath)
 
-	return c.SendFile(fileName)
+	return c.SendFile(filePath)
 }
