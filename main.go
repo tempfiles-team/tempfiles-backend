@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 
-	VER := "1.1.2"
+	VER := "1.1.3"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
@@ -64,7 +65,7 @@ func upload(c *fiber.Ctx) error {
 	}
 	defer buffer.Close()
 
-	objectName := data.Filename
+	objectName := strings.Replace(data.Filename, " ", "-", -1) // replace spaces with -
 	fileBuffer := buffer
 	contentType := data.Header["Content-Type"][0]
 	fileSize := data.Size
