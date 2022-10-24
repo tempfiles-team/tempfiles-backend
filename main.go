@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/minpeter/tempfiles-backend/file"
@@ -20,7 +21,7 @@ func main() {
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
 	})
 
-	app.Use(cors.New(cors.Config{
+	app.Use(cache.New(), cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
@@ -43,6 +44,8 @@ func main() {
 	app.Delete("/del/:filename", delete)
 	app.Get("/dl/:filename", download)
 	app.Get("/view/:filename", view)
+
+	app.Get("/newdl/:filename", NewDownload)
 
 	log.Fatal(app.Listen(":5000"))
 }
@@ -129,4 +132,21 @@ func view(c *fiber.Ctx) error {
 	defer os.Remove(filePath)
 
 	return c.SendFile(filePath)
+}
+
+func NewDownload(c *fiber.Ctx) error {
+	fileName := c.Params("filename")
+	object, fileName, err := file.NewDownload(fileName)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio download error",
+			"err":     err.Error(),
+		})
+	}
+
+	c.Response().Header.Set("Content-Disposition", "attachment; filename="+fileName)
+
+	defer object.Close()
+
+	return c.SendStream(object)
 }
