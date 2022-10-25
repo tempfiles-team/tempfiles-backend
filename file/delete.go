@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func Delete(objectName string) (fiber.Map, error) {
+func delete(objectName string) (fiber.Map, error) {
 	ctx := context.Background()
 
 	err := MinioClient.RemoveObject(ctx, BucketName, objectName, minio.RemoveObjectOptions{})
@@ -18,4 +18,16 @@ func Delete(objectName string) (fiber.Map, error) {
 		"message": "delete success",
 		"success": true,
 	}, nil
+}
+
+func DeleteHandler(c *fiber.Ctx) error {
+	fileName := c.Params("filename")
+	result, err := delete(fileName)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio delete error",
+			"error":   err.Error(),
+		})
+	}
+	return c.JSON(result)
 }
