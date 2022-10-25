@@ -15,7 +15,7 @@ type ResultStruct struct {
 	Expires      string
 }
 
-func List() (fiber.Map, error) {
+func list() (fiber.Map, error) {
 
 	ctx := context.Background()
 	objectCh := MinioClient.ListObjects(ctx, BucketName, minio.ListObjectsOptions{})
@@ -34,4 +34,14 @@ func List() (fiber.Map, error) {
 		"success": true,
 		"list":    result,
 	}, nil
+}
+
+func ListHandler(c *fiber.Ctx) error {
+	result, err := list()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio list error",
+		})
+	}
+	return c.JSON(result)
 }
