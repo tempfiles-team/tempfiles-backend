@@ -38,8 +38,8 @@ func UploadHandler(c *fiber.Ctx) error {
 	data, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
+			"message": "Please upload a file (multipart/form-data)",
+			"error":   err.Error(),
 		})
 	}
 
@@ -47,8 +47,8 @@ func UploadHandler(c *fiber.Ctx) error {
 	buffer, err := data.Open()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "can't chage file to buffer",
-			"error":  err.Error(),
+			"message": "can't chage file to buffer",
+			"error":   err.Error(),
 		})
 	}
 	defer buffer.Close()
@@ -62,8 +62,8 @@ func UploadHandler(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
-			"status": "minio upload error",
-			"error":  err.Error(),
+			"message": "minio upload error",
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(result)

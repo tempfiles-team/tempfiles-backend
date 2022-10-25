@@ -18,7 +18,7 @@ func download(objectName string) (*minio.Object, minio.ObjectInfo, string, error
 
 	object, err := MinioClient.GetObject(context.Background(), BucketName, decodedObjectName, minio.GetObjectOptions{})
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error getting object: %s", err)
 		return nil, minio.ObjectInfo{}, "", err
 	}
 	stat, nil := object.Stat()
@@ -33,7 +33,7 @@ func DownloadHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio download error",
-			"err":     err.Error(),
+			"error":   err.Error(),
 		})
 	}
 

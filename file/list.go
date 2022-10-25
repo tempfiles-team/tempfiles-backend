@@ -23,7 +23,7 @@ func list() (fiber.Map, error) {
 	var result []ResultStruct
 	for object := range objectCh {
 		if object.Err != nil {
-			return fiber.Map{"message": "list failed", "success": false, "list": result}, object.Err
+			return nil, object.Err
 		}
 		result = append(result, ResultStruct{Name: object.Key, LastModified: object.LastModified.Format(time.RFC3339),
 			Size: object.Size, Expires: object.Expires.Format(time.RFC3339)})
@@ -41,6 +41,7 @@ func ListHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio list error",
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(result)

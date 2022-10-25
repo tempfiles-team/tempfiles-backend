@@ -26,6 +26,7 @@ func DeleteHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio delete error",
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(result)
