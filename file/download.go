@@ -8,43 +8,20 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-// MinioConnection func for opening minio connection.
-func Download(objectName string) (string, string, error) {
-	ctx := context.Background()
-
+func Download(objectName string) (*minio.Object, minio.ObjectInfo, string, error) {
 	decodedObjectName, err := url.QueryUnescape(objectName)
 	if err != nil {
 		log.Printf("Error decoding object name: %s", err)
-		return "", "", err
-	}
-
-	filePath := "tmp/" + decodedObjectName
-	log.Print("Downloading file: ", filePath)
-
-	if err := MinioClient.FGetObject(ctx, BucketName, decodedObjectName, filePath, minio.GetObjectOptions{}); err != nil {
-		log.Println(err)
-		return "", "", err
-	}
-
-	log.Printf("Successfully downloaded %s\n", decodedObjectName)
-
-	return filePath, decodedObjectName, nil
-}
-
-func NewDownload(objectName string) (*minio.Object, string, error) {
-	decodedObjectName, err := url.QueryUnescape(objectName)
-	if err != nil {
-		log.Printf("Error decoding object name: %s", err)
-		return nil, "", err
+		return nil, minio.ObjectInfo{}, "", err
 	}
 
 	object, err := MinioClient.GetObject(context.Background(), BucketName, decodedObjectName, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println(err)
-		return nil, "", err
+		return nil, minio.ObjectInfo{}, "", err
 	}
-
+	stat, nil := object.Stat()
 	log.Printf("Successfully downloaded %s\n", decodedObjectName)
 
-	return object, decodedObjectName, nil
+	return object, stat, decodedObjectName, nil
 }

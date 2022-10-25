@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"math"
-	"os"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -15,13 +13,13 @@ import (
 
 func main() {
 
-	VER := "1.1.5"
+	VER := "1.1.6"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
 	})
 
-	app.Use(cache.New(), cors.New(cors.Config{
+	app.Use(cache.New(cache.Config{StoreResponseHeaders: true}), cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
@@ -43,9 +41,6 @@ func main() {
 	app.Get("/list", list)
 	app.Delete("/del/:filename", delete)
 	app.Get("/dl/:filename", download)
-	app.Get("/view/:filename", view)
-
-	app.Get("/newdl/:filename", NewDownload)
 
 	log.Fatal(app.Listen(":5000"))
 }
@@ -69,7 +64,7 @@ func upload(c *fiber.Ctx) error {
 	}
 	defer buffer.Close()
 
-	objectName := strings.Replace(data.Filename, " ", "-", -1) // replace spaces with -
+	objectName := data.Filename
 	fileBuffer := buffer
 	contentType := data.Header["Content-Type"][0]
 	fileSize := data.Size
@@ -108,35 +103,7 @@ func delete(c *fiber.Ctx) error {
 
 func download(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
-	filePath, fileName, err := file.Download(fileName)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio download error",
-		})
-	}
-
-	defer os.Remove(filePath)
-
-	return c.Download(filePath, fileName)
-}
-
-func view(c *fiber.Ctx) error {
-	fileName := c.Params("filename")
-	filePath, _, err := file.Download(fileName)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio download error",
-		})
-	}
-
-	defer os.Remove(filePath)
-
-	return c.SendFile(filePath)
-}
-
-func NewDownload(c *fiber.Ctx) error {
-	fileName := c.Params("filename")
-	object, fileName, err := file.NewDownload(fileName)
+	object, objectInfo, fileName, err := file.Download(fileName)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio download error",
@@ -144,8 +111,9 @@ func NewDownload(c *fiber.Ctx) error {
 		})
 	}
 
+	c.Response().Header.Set("Content-Type", objectInfo.ContentType)
 	c.Response().Header.Set("Content-Disposition", "attachment; filename="+fileName)
-
+	c.Response().Header.Set("Accept-Ranges", "bytes")
 	defer object.Close()
 
 	return c.SendStream(object)
