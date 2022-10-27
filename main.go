@@ -1,16 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
 	"strings"
 
+	"github.com/minpeter/tempfiles-backend/data"
+	"github.com/minpeter/tempfiles-backend/file"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/minpeter/tempfiles-backend/file"
 )
+
+type SignupRequest struct {
+	Name     string
+	Email    string
+	Password string
+}
+
+type LoginRequest struct {
+	Email    string
+	Password string
+}
 
 func main() {
 
@@ -23,9 +37,14 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET, POST, DELETE",
 	}))
 
-	var err error
+	engine, err := data.CreateDBEngine()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	file.MinioClient, err = file.Connection()
 	if err != nil {
 		log.Fatalf("minio connection error: %v", err)
@@ -43,7 +62,7 @@ func main() {
 	app.Delete("/delete/:filename", delete)
 	app.Get("/dl/:filename", download)
 
-	log.Fatal(app.Listen(":5000"))
+	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 }
 
 func upload(c *fiber.Ctx) error {
