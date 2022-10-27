@@ -1,0 +1,32 @@
+[
+  {
+    "apiName": "/upload",
+    "method":  "POST",
+    "desc":    "특정 파일을 서버에 업로드합니다.",
+    "command": "curl -X POST -F 'file=@[filepath or filename]' https://tfb.minpeter.cf/upload"
+  },
+  {
+    "apiName": "/list",
+    "method":  "GET",
+    "desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
+    "command": "curl https://tfb.minpeter.cf/list"
+  },
+  {
+    "apiName": "/del/[filename]",
+    "method":  "DELETE",
+    "desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
+    "command": "curl -X DELETE https://tfb.minpeter.cf/del/[filename]"
+  },
+  {
+    "apiName": "/dl/[filename]",
+    "method":  "GET",
+    "desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
+    "command": "curl -O https://tfb.minpeter.cf/dl/[filename]"
+  },
+  {
+    "apiName": "/",
+    "method":  "GET",
+    "desc":    "백엔드 API 서버 버전, 혹은 서버의 상태를 확인합니다.",
+    "command": "curl https://tfb.minpeter.cf/"
+  }
+]

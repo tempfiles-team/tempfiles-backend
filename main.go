@@ -42,5 +42,9 @@ func main() {
 	app.Delete("/del/:filename", file.DeleteHandler)
 	app.Get("/dl/:filename", file.DownloadHandler)
 
+	app.Get("/info", func(c *fiber.Ctx) error {
+		return c.SendFile("apiInfo.json")
+	})
+
 	log.Fatal(app.Listen(":5000"))
 }
