@@ -57,6 +57,7 @@ func main() {
 	app.Get("/list", file.ListHandler)
 	app.Delete("/del/:filename", file.DeleteHandler)
 	app.Get("/dl/:filename", file.DownloadHandler)
+	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
 
 	app.Get("/info", func(c *fiber.Ctx) error {
 		return c.SendFile("apiInfo.json")

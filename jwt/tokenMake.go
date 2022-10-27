@@ -12,7 +12,7 @@ func CreateJWTToken(fileRow database.FileRow) (string, int64, error) {
 	exp := time.Now().Add(time.Minute * 10).Unix()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["user id"] = fileRow.Id
+	claims["file id"] = fileRow.Id
 	claims["exp"] = exp
 	claims["encrypto"] = fileRow.Encrypto
 	claims["isAdmin"] = false
