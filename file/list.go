@@ -30,9 +30,10 @@ func list() (fiber.Map, error) {
 	}
 
 	return fiber.Map{
-		"message": "list success",
-		"success": true,
-		"list":    result,
+		"message":      "list success",
+		"success":      true,
+		"list":         result,
+		"numberOfList": len(result),
 	}, nil
 }
 
