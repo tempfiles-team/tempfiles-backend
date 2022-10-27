@@ -23,13 +23,13 @@ func Upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64
 	log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
 
 	return fiber.Map{
-		"message":    "upload success",
-		"success":    true,
-		"filename":   objectName,
-		"size":       info.Size,
-		"filetype":   contentType,
-		"url":        info.Location,
-		"expires":    info.Expiration,
-		"delete_url": fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
+		"message":      "upload success",
+		"success":      true,
+		"filename":     objectName,
+		"size":         info.Size,
+		"filetype":     contentType,
+		"expires":      info.Expiration,
+		"delete_url":   fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
+		"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 	}, nil
 }

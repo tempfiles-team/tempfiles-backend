@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
-	"strings"
 
 	"github.com/minpeter/tempfiles-backend/data"
 	"github.com/minpeter/tempfiles-backend/file"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -28,13 +27,13 @@ type LoginRequest struct {
 
 func main() {
 
-	VER := "1.1.3"
+	VER := "1.1.6"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
 	})
 
-	app.Use(cors.New(cors.Config{
+	app.Use(cache.New(cache.Config{StoreResponseHeaders: true}), cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
 		AllowMethods: "GET, POST, DELETE",
@@ -59,7 +58,7 @@ func main() {
 
 	app.Post("/upload", upload)
 	app.Get("/list", list)
-	app.Delete("/delete/:filename", delete)
+	app.Delete("/del/:filename", delete)
 	app.Get("/dl/:filename", download)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
@@ -84,7 +83,7 @@ func upload(c *fiber.Ctx) error {
 	}
 	defer buffer.Close()
 
-	objectName := strings.Replace(data.Filename, " ", "-", -1) // replace spaces with -
+	objectName := data.Filename
 	fileBuffer := buffer
 	contentType := data.Header["Content-Type"][0]
 	fileSize := data.Size
@@ -123,14 +122,18 @@ func delete(c *fiber.Ctx) error {
 
 func download(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
-	filePath, err := file.Download(fileName)
+	object, objectInfo, fileName, err := file.Download(fileName)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio download error",
+			"err":     err.Error(),
 		})
 	}
 
-	defer os.Remove(filePath)
+	c.Response().Header.Set("Content-Type", objectInfo.ContentType)
+	c.Response().Header.Set("Content-Disposition", "attachment; filename="+fileName)
+	c.Response().Header.Set("Accept-Ranges", "bytes")
+	defer object.Close()
 
-	return c.SendFile(filePath)
+	return c.SendStream(object)
 }

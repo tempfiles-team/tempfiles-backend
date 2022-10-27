@@ -3,22 +3,25 @@ package file
 import (
 	"context"
 	"log"
+	"net/url"
 
 	"github.com/minio/minio-go/v7"
 )
 
-// MinioConnection func for opening minio connection.
-func Download(objectName string) (string, error) {
-	ctx := context.Background()
-
-	filePath := "tmp/" + objectName
-
-	err := MinioClient.FGetObject(ctx, BucketName, objectName, filePath, minio.GetObjectOptions{})
+func Download(objectName string) (*minio.Object, minio.ObjectInfo, string, error) {
+	decodedObjectName, err := url.QueryUnescape(objectName)
 	if err != nil {
-		return "", err
+		log.Printf("Error decoding object name: %s", err)
+		return nil, minio.ObjectInfo{}, "", err
 	}
 
-	log.Printf("Successfully downloaded %s\n", objectName)
+	object, err := MinioClient.GetObject(context.Background(), BucketName, decodedObjectName, minio.GetObjectOptions{})
+	if err != nil {
+		log.Println(err)
+		return nil, minio.ObjectInfo{}, "", err
+	}
+	stat, nil := object.Stat()
+	log.Printf("Successfully downloaded %s\n", decodedObjectName)
 
-	return filePath, nil
+	return object, stat, decodedObjectName, nil
 }
