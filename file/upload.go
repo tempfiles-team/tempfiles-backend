@@ -11,7 +11,7 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-func Upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64) (fiber.Map, error) {
+func upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64) (fiber.Map, error) {
 	ctx := context.Background()
 
 	// Upload the zip file with FPutObject
@@ -32,4 +32,39 @@ func Upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64
 		"delete_url":   fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 		"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 	}, nil
+}
+
+func UploadHandler(c *fiber.Ctx) error {
+	data, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please upload a file (multipart/form-data)",
+			"error":   err.Error(),
+		})
+	}
+
+	// Get Buffer from file
+	buffer, err := data.Open()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "can't chage file to buffer",
+			"error":   err.Error(),
+		})
+	}
+	defer buffer.Close()
+
+	objectName := data.Filename
+	fileBuffer := buffer
+	contentType := data.Header["Content-Type"][0]
+	fileSize := data.Size
+
+	result, err := upload(objectName, contentType, fileBuffer, fileSize)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio upload error",
+			"error":   err.Error(),
+		})
+	}
+	return c.JSON(result)
 }

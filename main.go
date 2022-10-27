@@ -56,84 +56,14 @@ func main() {
 		})
 	})
 
-	app.Post("/upload", upload)
-	app.Get("/list", list)
-	app.Delete("/del/:filename", delete)
-	app.Get("/dl/:filename", download)
+	app.Post("/upload", file.UploadHandler)
+	app.Get("/list", file.ListHandler)
+	app.Delete("/del/:filename", file.DeleteHandler)
+	app.Get("/dl/:filename", file.DownloadHandler)
+
+	app.Get("/info", func(c *fiber.Ctx) error {
+		return c.SendFile("apiInfo.json")
+	})
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
-}
-
-func upload(c *fiber.Ctx) error {
-	data, err := c.FormFile("file")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
-
-	// Get Buffer from file
-	buffer, err := data.Open()
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "can't chage file to buffer",
-			"error":  err.Error(),
-		})
-	}
-	defer buffer.Close()
-
-	objectName := data.Filename
-	fileBuffer := buffer
-	contentType := data.Header["Content-Type"][0]
-	fileSize := data.Size
-
-	result, err := file.Upload(objectName, contentType, fileBuffer, fileSize)
-
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"status": "minio upload error",
-			"error":  err.Error(),
-		})
-	}
-	return c.JSON(result)
-}
-
-func list(c *fiber.Ctx) error {
-	result, err := file.List()
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio list error",
-		})
-	}
-	return c.JSON(result)
-}
-
-func delete(c *fiber.Ctx) error {
-	fileName := c.Params("filename")
-	result, err := file.Delete(fileName)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio delete error",
-		})
-	}
-	return c.JSON(result)
-}
-
-func download(c *fiber.Ctx) error {
-	fileName := c.Params("filename")
-	object, objectInfo, fileName, err := file.Download(fileName)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio download error",
-			"err":     err.Error(),
-		})
-	}
-
-	c.Response().Header.Set("Content-Type", objectInfo.ContentType)
-	c.Response().Header.Set("Content-Disposition", "attachment; filename="+fileName)
-	c.Response().Header.Set("Accept-Ranges", "bytes")
-	defer object.Close()
-
-	return c.SendStream(object)
 }
