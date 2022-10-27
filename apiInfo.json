@@ -2,52 +2,31 @@
   {
     "apiName": "/upload",
     "method":  "POST",
-    "desc":    "upload file",
-    "params":  "file",
-    "response": {
-      "delete_url": "파일 삭제 url",
-      "download_url": "파일 다운로드 url",
-      "expires": "파일 만료 날짜",
-      "filename": "파일 이름",
-      "filetype": "파일 타입",
-      "message": "upload success",
-      "size": "파일 사이즈 (int/byte)",
-      "success": "성공 여부 (bool)"
-    }
+    "desc":    "특정 파일을 서버에 업로드합니다.",
+    "command": "curl -X POST -F 'file=@[filepath or filename]' https://tfb.minpeter.cf/upload"
   },
   {
     "apiName": "/list",
     "method":  "GET",
-    "desc":    "list all files",
-    "params":  "none",
-    "response": {
-      "list": [
-        {
-          "Name": "파일명",
-          "LastModified": "만료 날짜",
-          "Size": "파일크기 (int/byte)",
-          "Expires": "파일 만료 날짜"
-        }
-      ],
-      "message": "list success",
-      "success": "성공 여부 (bool)"
-    }
+    "desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
+    "command": "curl https://tfb.minpeter.cf/list"
   },
   {
-    "apiName": "/del/:filename",
+    "apiName": "/del/[filename]",
     "method":  "DELETE",
-    "desc":    "delete file",
-    "params":  "filename",
-    "response": {
-      "message": "delete success",
-      "success": "성공 여부 (bool)"
-    }
+    "desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
+    "command": "curl -X DELETE https://tfb.minpeter.cf/del/[filename]"
   },
   {
-    "apiName": "/dl/:filename",
+    "apiName": "/dl/[filename]",
     "method":  "GET",
-    "desc":    "download file",
-    "params":  "filename",
-    "response": "바이트 형식으로 파일 다운로드"
+    "desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
+    "command": "curl -O https://tfb.minpeter.cf/dl/[filename]"
+  },
+  {
+    "apiName": "/",
+    "method":  "GET",
+    "desc":    "백엔드 API 서버 버전, 혹은 서버의 상태를 확인합니다.",
+    "command": "curl https://tfb.minpeter.cf/"
   }
 ]
