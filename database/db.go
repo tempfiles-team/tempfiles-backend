@@ -1,17 +1,22 @@
-package data
+package database
 
 import (
 	// _ "github.com/lib/pq"
+
 	_ "modernc.org/sqlite"
 	"xorm.io/xorm"
 )
 
-type User struct {
+type FileRow struct {
 	Id       int64
-	Name     string
-	Email    string
+	FileName string
+	FileType string
+	FileSize int64
 	Password string `json:"-"`
+	Encrypto bool
 }
+
+var Engine *xorm.Engine
 
 func CreateDBEngine() (*xorm.Engine, error) {
 	// connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", "localhost", 5432, "postgres", "qwer1234", "localAuth")
@@ -24,7 +29,7 @@ func CreateDBEngine() (*xorm.Engine, error) {
 	if err := engine.Ping(); err != nil {
 		return nil, err
 	}
-	if err := engine.Sync(new(User)); err != nil {
+	if err := engine.Sync(new(FileRow)); err != nil {
 		return nil, err
 	}
 

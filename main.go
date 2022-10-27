@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 
-	"github.com/minpeter/tempfiles-backend/data"
+	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,12 +14,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 )
-
-type SignupRequest struct {
-	Name     string
-	Email    string
-	Password string
-}
 
 type LoginRequest struct {
 	Email    string
@@ -39,14 +34,16 @@ func main() {
 		AllowMethods: "GET, POST, DELETE",
 	}))
 
-	engine, err := data.CreateDBEngine()
-	if err != nil {
-		log.Fatal(err)
-	}
+	var err error
 
 	file.MinioClient, err = file.Connection()
 	if err != nil {
 		log.Fatalf("minio connection error: %v", err)
+	}
+
+	database.Engine, err = database.CreateDBEngine()
+	if err != nil {
+		log.Fatalf("failed to create db engine: %v", err)
 	}
 
 	app.Get("/", func(c *fiber.Ctx) error {

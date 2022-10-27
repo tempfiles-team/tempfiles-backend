@@ -3,42 +3,56 @@ package file
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
+	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/minpeter/tempfiles-backend/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
-
-func upload(objectName, contentType string, fileBuffer io.Reader, fileSize int64) (fiber.Map, error) {
-	ctx := context.Background()
-
-	// Upload the zip file with FPutObject
-	info, err := MinioClient.PutObject(ctx, BucketName, objectName, fileBuffer, fileSize, minio.PutObjectOptions{ContentType: contentType})
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
-
-	return fiber.Map{
-		"message":      "upload success",
-		"success":      true,
-		"filename":     objectName,
-		"size":         info.Size,
-		"filetype":     contentType,
-		"expires":      info.Expiration,
-		"delete_url":   fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
-		"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
-	}, nil
-}
 
 func UploadHandler(c *fiber.Ctx) error {
 	data, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Please upload a file (multipart/form-data)",
+			"error":   err.Error(),
+		})
+	}
+
+	pw := c.Query("password", "")
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "bcrypt hash error",
+			"error":   err.Error(),
+		})
+	}
+
+	fileRow := &database.FileRow{
+		FileName: data.Filename,
+		FileType: data.Header.Get("Content-Type"),
+		FileSize: data.Size,
+		Encrypto: pw != "",
+		Password: string(hash),
+	}
+
+	_, err = database.Engine.Insert(fileRow)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "database insert error",
+			"error":   err.Error(),
+		})
+	}
+
+	token, exp, err := jwt.CreateJWTToken(*fileRow)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "jwt token creation error",
 			"error":   err.Error(),
 		})
 	}
@@ -58,13 +72,40 @@ func UploadHandler(c *fiber.Ctx) error {
 	contentType := data.Header["Content-Type"][0]
 	fileSize := data.Size
 
-	result, err := upload(objectName, contentType, fileBuffer, fileSize)
-
+	// Upload the zip file with FPutObject
+	info, err := MinioClient.PutObject(context.Background(), BucketName, objectName, fileBuffer, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio upload error",
 			"error":   err.Error(),
 		})
 	}
-	return c.JSON(result)
+
+	log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
+
+	if fileRow.Encrypto {
+		return c.JSON(fiber.Map{
+			"message":      "upload success",
+			"success":      true,
+			"filename":     objectName,
+			"size":         info.Size,
+			"filetype":     contentType,
+			"expires":      info.Expiration,
+			"token":        token,
+			"tokenExpires": exp,
+			"delete_url":   fmt.Sprintf("%s/delete/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
+			"download_url": fmt.Sprintf("%s/dl/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
+		})
+	} else {
+		return c.JSON(fiber.Map{
+			"message":      "upload success",
+			"success":      true,
+			"filename":     objectName,
+			"size":         info.Size,
+			"filetype":     contentType,
+			"expires":      info.Expiration,
+			"delete_url":   fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
+			"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
+		})
+	}
 }

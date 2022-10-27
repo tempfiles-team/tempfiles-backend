@@ -11,7 +11,9 @@ import (
 )
 
 var MinioClient *minio.Client
-var BucketName string = os.Getenv("MINIO_BUCKET")
+
+// var BucketName string = os.Getenv("MINIO_BUCKET")
+var BucketName string = "tempfiles"
 
 func Connection() (*minio.Client, error) {
 	ctx := context.Background()

@@ -4,8 +4,10 @@ go 1.19
 
 require (
 	github.com/gofiber/fiber/v2 v2.37.0
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/joho/godotenv v1.4.0
 	github.com/minio/minio-go/v7 v7.0.35
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	modernc.org/sqlite v1.19.3
 	xorm.io/xorm v1.3.2
@@ -33,7 +35,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.39.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.3.0 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
