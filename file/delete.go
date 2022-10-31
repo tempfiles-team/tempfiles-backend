@@ -7,9 +7,8 @@ import (
 )
 
 func delete(objectName string) (fiber.Map, error) {
-	ctx := context.Background()
 
-	err := MinioClient.RemoveObject(ctx, BucketName, objectName, minio.RemoveObjectOptions{})
+	err := MinioClient.RemoveObject(context.Background(), BucketName, objectName, minio.RemoveObjectOptions{})
 
 	if err != nil {
 		return nil, err

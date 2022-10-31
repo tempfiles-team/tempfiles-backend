@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
+	"github.com/minpeter/tempfiles-backend/database"
 )
 
 type ResultStruct struct {
@@ -13,37 +14,52 @@ type ResultStruct struct {
 	LastModified string
 	Size         int64
 	Expires      string
+	IsEncrypted  bool
 }
 
-func list() (fiber.Map, error) {
+func checkEncrypted(fileName string) bool {
 
-	ctx := context.Background()
-	objectCh := MinioClient.ListObjects(ctx, BucketName, minio.ListObjectsOptions{})
+	fileRow := new(database.FileRow)
+	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
+	if err != nil {
+		return false
+	}
+	if !has {
+		return false
+	}
+	return fileRow.Encrypto
+
+}
+
+func ListHandler(c *fiber.Ctx) error {
+
+	objectCh := MinioClient.ListObjects(context.Background(), BucketName, minio.ListObjectsOptions{})
 
 	var result []ResultStruct
+
 	for object := range objectCh {
 		if object.Err != nil {
-			return nil, object.Err
+			return c.Status(500).JSON(fiber.Map{
+				"message": "minio list error",
+				"error":   object.Err.Error(),
+			})
 		}
-		result = append(result, ResultStruct{Name: object.Key, LastModified: object.LastModified.Format(time.RFC3339),
-			Size: object.Size, Expires: object.Expires.Format(time.RFC3339)})
+
+		result = append(
+			result,
+			ResultStruct{
+				Name:         object.Key,
+				Size:         object.Size,
+				IsEncrypted:  checkEncrypted(object.Key),
+				Expires:      object.Expires.Format(time.RFC3339),
+				LastModified: object.LastModified.Format(time.RFC3339),
+			})
 	}
 
-	return fiber.Map{
+	return c.JSON(fiber.Map{
 		"message":      "list success",
 		"success":      true,
 		"list":         result,
 		"numberOfList": len(result),
-	}, nil
-}
-
-func ListHandler(c *fiber.Ctx) error {
-	result, err := list()
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio list error",
-			"error":   err.Error(),
-		})
-	}
-	return c.JSON(result)
+	})
 }
