@@ -11,3 +11,4 @@ data:
   MINIO_USESSL: "False"
   MINIO_BUCKET: "tempfiles-bucket"
   BACKEND_BASEURL: "https://tfb.minpeter.cf"
+  BACKEND_PORT: "5000"
