@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
@@ -13,6 +14,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
+
+	jwtWare "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -53,15 +56,36 @@ func main() {
 		})
 	})
 
-	app.Post("/upload", file.UploadHandler)
-	app.Get("/list", file.ListHandler)
-	app.Delete("/del/:filename", file.DeleteHandler)
-	app.Get("/dl/:filename", file.DownloadHandler)
-	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
-
 	app.Get("/info", func(c *fiber.Ctx) error {
 		return c.SendFile("apiInfo.json")
 	})
+
+	app.Get("/list", file.ListHandler)
+
+	app.Post("/upload", file.UploadHandler)
+	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
+
+	app.Use(jwtWare.New(jwtWare.Config{
+		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
+		TokenLookup: "query:token",
+		Filter: func(c *fiber.Ctx) bool {
+
+			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
+
+			fileRow := new(database.FileRow)
+			has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
+			if err != nil {
+				return false
+			}
+			if !has {
+				return false
+			}
+			return !fileRow.Encrypto
+		},
+	}))
+
+	app.Get("/dl/:filename", file.OldDownloadHandler)
+	app.Delete("/del/:filename", file.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 }

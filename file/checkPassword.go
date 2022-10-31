@@ -9,7 +9,7 @@ import (
 
 func CheckPasswordHandler(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
-	pw := c.Query("password", "")
+	pw := c.Query("pw", "")
 
 	if fileName == "" || pw == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

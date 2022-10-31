@@ -14,15 +14,8 @@ import (
 )
 
 func UploadHandler(c *fiber.Ctx) error {
-	data, err := c.FormFile("file")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please upload a file (multipart/form-data)",
-			"error":   err.Error(),
-		})
-	}
 
-	pw := c.Query("password", "")
+	pw := c.Query("pw", "")
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
 	if err != nil {
@@ -32,9 +25,17 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	data, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please upload a file (multipart/form-data)",
+			"error":   err.Error(),
+		})
+	}
+
 	fileRow := &database.FileRow{
 		FileName: data.Filename,
-		FileType: data.Header.Get("Content-Type"),
+		FileType: data.Header["Content-Type"][0],
 		FileSize: data.Size,
 		Encrypto: pw != "",
 		Password: string(hash),
@@ -49,7 +50,6 @@ func UploadHandler(c *fiber.Ctx) error {
 	}
 
 	token, exp, err := jwt.CreateJWTToken(*fileRow)
-
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "jwt token creation error",
@@ -68,12 +68,11 @@ func UploadHandler(c *fiber.Ctx) error {
 	defer buffer.Close()
 
 	objectName := data.Filename
-	fileBuffer := buffer
 	contentType := data.Header["Content-Type"][0]
 	fileSize := data.Size
 
 	// Upload the zip file with FPutObject
-	info, err := MinioClient.PutObject(context.Background(), BucketName, objectName, fileBuffer, fileSize, minio.PutObjectOptions{ContentType: contentType})
+	info, err := MinioClient.PutObject(context.Background(), BucketName, objectName, buffer, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "minio upload error",
@@ -93,7 +92,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			"expires":      info.Expiration,
 			"token":        token,
 			"tokenExpires": exp,
-			"delete_url":   fmt.Sprintf("%s/delete/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
+			"delete_url":   fmt.Sprintf("%s/del/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
 			"download_url": fmt.Sprintf("%s/dl/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
 		})
 	} else {
@@ -104,7 +103,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			"size":         info.Size,
 			"filetype":     contentType,
 			"expires":      info.Expiration,
-			"delete_url":   fmt.Sprintf("%s/delete/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
+			"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 			"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/url"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
@@ -22,13 +23,45 @@ func download(objectName string) (*minio.Object, minio.ObjectInfo, string, error
 		return nil, minio.ObjectInfo{}, "", err
 	}
 	stat, nil := object.Stat()
-	log.Printf("Successfully downloaded %s\n", decodedObjectName)
+	log.Printf("Successfully downloaded %s of size %d\n", decodedObjectName, stat.Size)
 
 	return object, stat, decodedObjectName, nil
 }
 
+func OldDownloadHandler(c *fiber.Ctx) error {
+
+	fileName := c.Params("filename")
+
+	ctx := context.Background()
+
+	decodedObjectName, err := url.QueryUnescape(fileName)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio download error",
+			"error":   err.Error(),
+		})
+	}
+
+	filePath := "tmp/" + decodedObjectName
+	log.Print("Downloading file: ", filePath)
+
+	if err := MinioClient.FGetObject(ctx, BucketName, decodedObjectName, filePath, minio.GetObjectOptions{}); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "minio download error",
+			"error":   err.Error(),
+		})
+	}
+
+	log.Printf("Successfully downloaded %s\n", decodedObjectName)
+
+	defer os.Remove(filePath)
+
+	return c.Download(filePath, decodedObjectName)
+}
+
 func DownloadHandler(c *fiber.Ctx) error {
 	fileName := c.Params("filename")
+
 	object, objectInfo, fileName, err := download(fileName)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
