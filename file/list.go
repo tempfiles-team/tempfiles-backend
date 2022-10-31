@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
-	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/minpeter/tempfiles-backend/jwt"
 )
 
 type ResultStruct struct {
@@ -15,20 +15,6 @@ type ResultStruct struct {
 	Size         int64
 	Expires      string
 	IsEncrypted  bool
-}
-
-func checkEncrypted(fileName string) bool {
-
-	fileRow := new(database.FileRow)
-	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
-	if err != nil {
-		return false
-	}
-	if !has {
-		return false
-	}
-	return fileRow.Encrypto
-
 }
 
 func ListHandler(c *fiber.Ctx) error {
@@ -50,7 +36,7 @@ func ListHandler(c *fiber.Ctx) error {
 			ResultStruct{
 				Name:         object.Key,
 				Size:         object.Size,
-				IsEncrypted:  checkEncrypted(object.Key),
+				IsEncrypted:  jwt.IsEncrypted(object.Key),
 				Expires:      object.Expires.Format(time.RFC3339),
 				LastModified: object.LastModified.Format(time.RFC3339),
 			})
