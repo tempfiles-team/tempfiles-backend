@@ -31,11 +31,18 @@ func main() {
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
 	})
 
-	app.Use(cache.New(cache.Config{StoreResponseHeaders: true}), cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept",
-		AllowMethods: "GET, POST, DELETE",
-	}))
+	app.Use(
+		cache.New(cache.Config{
+			StoreResponseHeaders: true,
+			Next: func(c *fiber.Ctx) bool {
+				return c.Route().Path != "/dl/:filename"
+			},
+		}),
+		cors.New(cors.Config{
+			AllowOrigins: "*",
+			AllowHeaders: "Origin, Content-Type, Accept",
+			AllowMethods: "GET, POST, DELETE",
+		}))
 
 	var err error
 
@@ -57,7 +64,57 @@ func main() {
 	})
 
 	app.Get("/info", func(c *fiber.Ctx) error {
-		return c.SendFile("apiInfo.json")
+		apiName := c.Query("api", "")
+		switch apiName {
+		case "upload":
+			return c.JSON(fiber.Map{
+				"apiName": "/upload",
+				"method":  "POST",
+				"desc":    "특정 파일을 서버에 업로드합니다.",
+				"command": "curl -X POST -F 'file=@[filepath or filename]' https://tfb.minpeter.cf/upload",
+			})
+		case "list":
+			return c.JSON(fiber.Map{
+				"apiName": "/list",
+				"method":  "GET",
+				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
+				"command": "curl https://tfb.minpeter.cf/list",
+			})
+		case "del":
+			return c.JSON(fiber.Map{
+				"apiName": "/del/[filename]",
+				"method":  "DELETE",
+				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
+				"command": "curl -X DELETE https://tfb.minpeter.cf/del/[filename]",
+			})
+		case "dl":
+			return c.JSON(fiber.Map{
+				"apiName": "/dl/[filename]",
+				"method":  "GET",
+				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
+				"command": "curl -O https://tfb.minpeter.cf/dl/[filename]",
+			})
+		default:
+			backendUrl := os.Getenv("BACKEND_BASEURL")
+			return c.JSON([]fiber.Map{
+				{
+					"apiUrl":     backendUrl + "/upload",
+					"apiHandler": "upload",
+				},
+				{
+					"apiUrl":     backendUrl + "/list",
+					"apiHandler": "list",
+				},
+				{
+					"apiUrl":     backendUrl + "/del/[filename]",
+					"apiHandler": "del",
+				},
+				{
+					"apiUrl":     backendUrl + "/dl/[filename]",
+					"apiHandler": "dl",
+				},
+			})
+		}
 	})
 
 	app.Get("/list", file.ListHandler)
@@ -88,4 +145,5 @@ func main() {
 	app.Delete("/del/:filename", file.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
+
 }
