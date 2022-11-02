@@ -94,7 +94,7 @@ func main() {
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
 				"command": "curl -O https://tfb.minpeter.cf/dl/[filename]",
 			})
-		default:
+		case "":
 			backendUrl := os.Getenv("BACKEND_BASEURL")
 			return c.JSON([]fiber.Map{
 				{
@@ -114,6 +114,11 @@ func main() {
 					"apiHandler": "dl",
 				},
 			})
+		default:
+			return c.JSON(fiber.Map{
+				"message": "invalid api name",
+			})
+
 		}
 	})
 
