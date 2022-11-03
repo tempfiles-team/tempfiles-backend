@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
@@ -88,8 +89,10 @@ func UploadHandler(c *fiber.Ctx) error {
 			"success":      true,
 			"filename":     objectName,
 			"size":         info.Size,
+			"expires":      info.Expiration.Format(time.RFC3339),
 			"filetype":     contentType,
-			"expires":      info.Expiration,
+			"isEncrypted":  fileRow.Encrypto,
+			"lastModified": info.LastModified.Format(time.RFC3339),
 			"token":        token,
 			"tokenExpires": exp,
 			"delete_url":   fmt.Sprintf("%s/del/%s?token=%s", os.Getenv("BACKEND_BASEURL"), info.Key, token),
@@ -101,8 +104,10 @@ func UploadHandler(c *fiber.Ctx) error {
 			"success":      true,
 			"filename":     objectName,
 			"size":         info.Size,
+			"expires":      info.Expiration.Format(time.RFC3339),
 			"filetype":     contentType,
-			"expires":      info.Expiration,
+			"isEncrypted":  fileRow.Encrypto,
+			"lastModified": info.LastModified.Format(time.RFC3339),
 			"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 			"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 		})

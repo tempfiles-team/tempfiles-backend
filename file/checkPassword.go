@@ -55,8 +55,9 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 
 	// jwt 토큰 생성
 	return c.JSON(fiber.Map{
-		"message": "파일 비밀번호가 일치합니다.",
-		"token":   token, "tokenExpires": exp,
-		"unlock": true,
+		"message":      "파일 비밀번호가 일치합니다.",
+		"token":        token,
+		"tokenExpires": exp,
+		"unlock":       true,
 	})
 }

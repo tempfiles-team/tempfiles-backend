@@ -123,27 +123,21 @@ func main() {
 
 	app.Get("/list", file.ListHandler)
 
-	app.Post("/upload", file.UploadHandler)
 	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
 
+	app.Post("/upload", file.UploadHandler)
+
 	app.Use(jwtware.New(jwtware.Config{
+		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
+		TokenLookup: "query:token",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"message": "Unauthorized",
 				"error":   err.Error(),
 			})
 		},
-		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
-		TokenLookup: "query:token",
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.JSON(fiber.Map{
-				"message": "Missing or malformed JWT",
-			})
-		},
 		Filter: func(c *fiber.Ctx) bool {
 			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
-
-			log.Printf("c : %s\n c.OriginalURL() : %s\n", c.url, fileName)
 			return jwt.IsEncrypted(fileName)
 		},
 	}))

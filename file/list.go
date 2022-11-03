@@ -10,11 +10,12 @@ import (
 )
 
 type ResultStruct struct {
-	Name         string
-	LastModified string
-	Size         int64
-	Expires      string
-	IsEncrypted  bool
+	Filename     string `json:"filename"`
+	Size         int64  `json:"size"`
+	Expires      string `json:"expires"`
+	Filetype     string `json:"filetype"`
+	IsEncrypted  bool   `json:"isEncrypted"`
+	LastModified string `json:"lastModified"`
 }
 
 func ListHandler(c *fiber.Ctx) error {
@@ -34,10 +35,11 @@ func ListHandler(c *fiber.Ctx) error {
 		result = append(
 			result,
 			ResultStruct{
-				Name:         object.Key,
+				Filename:     object.Key,
 				Size:         object.Size,
-				IsEncrypted:  jwt.IsEncrypted(object.Key),
 				Expires:      object.Expires.Format(time.RFC3339),
+				Filetype:     object.ContentType,
+				IsEncrypted:  jwt.IsEncrypted(object.Key),
 				LastModified: object.LastModified.Format(time.RFC3339),
 			})
 	}
