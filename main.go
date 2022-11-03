@@ -9,13 +9,14 @@ import (
 
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
+	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 
-	jwtWare "github.com/gofiber/jwt/v3"
+	jwtware "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -125,7 +126,13 @@ func main() {
 	app.Post("/upload", file.UploadHandler)
 	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
 
-	app.Use(jwtWare.New(jwtWare.Config{
+	app.Use(jwtware.New(jwtware.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "Unauthorized",
+				"error":   err.Error(),
+			})
+		},
 		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
 		TokenLookup: "query:token",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -134,18 +141,10 @@ func main() {
 			})
 		},
 		Filter: func(c *fiber.Ctx) bool {
-
 			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
 
-			fileRow := new(database.FileRow)
-			has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
-			if err != nil {
-				return false
-			}
-			if !has {
-				return false
-			}
-			return !fileRow.Encrypto
+			log.Printf("c : %s\n c.OriginalURL() : %s\n", c.url, fileName)
+			return jwt.IsEncrypted(fileName)
 		},
 	}))
 

@@ -22,3 +22,15 @@ func CreateJWTToken(fileRow database.FileRow) (string, int64, error) {
 	}
 	return t, exp, nil
 }
+
+func IsEncrypted(fileName string) bool {
+	fileRow := new(database.FileRow)
+	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
+	if err != nil {
+		return false
+	}
+	if !has {
+		return false
+	}
+	return fileRow.Encrypto
+}
