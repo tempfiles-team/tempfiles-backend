@@ -25,7 +25,6 @@ type LoginRequest struct {
 
 func main() {
 
-	VER := "1.1.6"
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
 		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
@@ -58,8 +57,7 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"message":    "api is working normally :)",
-			"apiVersion": VER,
+			"message": "api is working normally :)",
 		})
 	})
 
@@ -130,6 +128,11 @@ func main() {
 	app.Use(jwtWare.New(jwtWare.Config{
 		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
 		TokenLookup: "query:token",
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.JSON(fiber.Map{
+				"message": "Missing or malformed JWT",
+			})
+		},
 		Filter: func(c *fiber.Ctx) bool {
 
 			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
