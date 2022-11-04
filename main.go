@@ -12,7 +12,6 @@ import (
 	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 
@@ -32,12 +31,12 @@ func main() {
 	})
 
 	app.Use(
-		cache.New(cache.Config{
-			StoreResponseHeaders: true,
-			Next: func(c *fiber.Ctx) bool {
-				return c.Route().Path != "/dl/:filename"
-			},
-		}),
+		// cache.New(cache.Config{
+		// 	StoreResponseHeaders: true,
+		// 	Next: func(c *fiber.Ctx) bool {
+		// 		return c.Route().Path != "/dl/:filename"
+		// 	},
+		// }),
 		cors.New(cors.Config{
 			AllowOrigins: "*",
 			AllowHeaders: "Origin, Content-Type, Accept",
@@ -138,7 +137,8 @@ func main() {
 		},
 		Filter: func(c *fiber.Ctx) bool {
 			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
-			return jwt.IsEncrypted(fileName)
+			log.Println(c.OriginalURL(), fileName)
+			return !jwt.IsEncrypted(fileName)
 		},
 	}))
 
