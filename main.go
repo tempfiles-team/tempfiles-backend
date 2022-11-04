@@ -137,7 +137,10 @@ func main() {
 		},
 		Filter: func(c *fiber.Ctx) bool {
 			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
-			log.Println(c.OriginalURL(), fileName)
+			param := struct {
+				ID uint `params:"id"`
+			}{}
+			log.Println(c.ParamsParser(&param))
 			return !jwt.IsEncrypted(fileName)
 		},
 	}))
