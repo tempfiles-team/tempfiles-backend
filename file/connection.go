@@ -6,14 +6,14 @@ import (
 	"os"
 	"strconv"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 var MinioClient *minio.Client
 
-// var BucketName string = os.Getenv("MINIO_BUCKET")
-var BucketName string = "tempfiles"
+var BucketName string = os.Getenv("MINIO_BUCKET")
 
 func Connection() (*minio.Client, error) {
 	ctx := context.Background()

@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
-	"github.com/minpeter/tempfiles-backend/jwt"
 )
 
 type ResultStruct struct {
@@ -39,7 +38,7 @@ func ListHandler(c *fiber.Ctx) error {
 				Size:         object.Size,
 				Expires:      object.Expires.Format(time.RFC3339),
 				Filetype:     object.ContentType,
-				IsEncrypted:  jwt.IsEncrypted(object.Key),
+				IsEncrypted:  false,
 				LastModified: object.LastModified.Format(time.RFC3339),
 			})
 	}

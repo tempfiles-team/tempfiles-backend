@@ -5,17 +5,12 @@ import (
 	"log"
 	"math"
 	"os"
-	"strings"
 
-	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
-	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
-
-	jwtware "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -31,12 +26,6 @@ func main() {
 	})
 
 	app.Use(
-		// cache.New(cache.Config{
-		// 	StoreResponseHeaders: true,
-		// 	Next: func(c *fiber.Ctx) bool {
-		// 		return c.Route().Path != "/dl/:filename"
-		// 	},
-		// }),
 		cors.New(cors.Config{
 			AllowOrigins: "*",
 			AllowHeaders: "Origin, Content-Type, Accept",
@@ -50,7 +39,6 @@ func main() {
 		log.Fatalf("minio connection error: %v", err)
 	}
 
-	database.Engine, err = database.CreateDBEngine()
 	if err != nil {
 		log.Fatalf("failed to create db engine: %v", err)
 	}
@@ -122,25 +110,7 @@ func main() {
 
 	app.Get("/list", file.ListHandler)
 
-	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
-
 	app.Post("/upload", file.UploadHandler)
-
-	app.Use(jwtware.New(jwtware.Config{
-		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
-		TokenLookup: "query:token",
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "Unauthorized",
-				"error":   err.Error(),
-			})
-		},
-		Filter: func(c *fiber.Ctx) bool {
-			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
-			log.Println(c.OriginalURL(), fileName)
-			return !jwt.IsEncrypted(fileName)
-		},
-	}))
 
 	app.Get("/dl/:filename", file.OldDownloadHandler)
 	app.Delete("/del/:filename", file.DeleteHandler)
