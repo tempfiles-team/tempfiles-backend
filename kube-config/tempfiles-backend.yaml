@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: tempfiles-backend-deploy
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: tf-backpod
