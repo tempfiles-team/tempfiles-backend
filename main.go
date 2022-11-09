@@ -9,7 +9,6 @@ import (
 
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
-	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -136,9 +135,14 @@ func main() {
 			})
 		},
 		Filter: func(c *fiber.Ctx) bool {
-			fileName := strings.Split(strings.Split(c.OriginalURL(), "/")[2], "?")[0]
-			log.Println(c.OriginalURL(), fileName)
-			return !jwt.IsEncrypted(fileName)
+
+			fileName := strings.Split(c.OriginalURL(), "/")[2]
+			if strings.Contains(fileName, "?") {
+				fileName = strings.Split(fileName, "?")[0]
+			}
+			log.Println(fileName)
+
+			return false
 		},
 	}))
 
