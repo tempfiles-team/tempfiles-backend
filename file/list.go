@@ -37,7 +37,6 @@ func ListHandler(c *fiber.Ctx) error {
 				Filename:     object.Key,
 				Size:         object.Size,
 				Expires:      object.Expires.Format(time.RFC3339),
-				Filetype:     object.ContentType,
 				IsEncrypted:  false,
 				LastModified: object.LastModified.Format(time.RFC3339),
 			})

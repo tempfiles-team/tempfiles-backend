@@ -112,7 +112,7 @@ func main() {
 
 	app.Post("/upload", file.UploadHandler)
 
-	app.Get("/dl/:filename", file.OldDownloadHandler)
+	app.Get("/dl/:filename", file.DownloadHandler)
 	app.Delete("/del/:filename", file.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))

@@ -52,7 +52,6 @@ func UploadHandler(c *fiber.Ctx) error {
 		"filename":     objectName,
 		"size":         info.Size,
 		"expires":      info.Expiration.Format(time.RFC3339),
-		"filetype":     contentType,
 		"isEncrypted":  false,
 		"lastModified": info.LastModified.Format(time.RFC3339),
 		"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
