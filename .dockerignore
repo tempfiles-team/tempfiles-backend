@@ -4,3 +4,4 @@ tempfile-backend
 deploy.sh
 .gitignore
 kube-config
+*.db
