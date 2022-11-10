@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/minpeter/tempfiles-backend/database"
-	"github.com/minpeter/tempfiles-backend/file"
 	"github.com/minpeter/tempfiles-backend/newfile"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,11 +40,6 @@ func main() {
 		}))
 
 	var err error
-
-	file.MinioClient, err = file.Connection()
-	if err != nil {
-		log.Fatalf("minio connection error: %v", err)
-	}
 
 	if newfile.CheckTmpFolder() != nil {
 		log.Fatalf("tmp folder error: %v", err)
