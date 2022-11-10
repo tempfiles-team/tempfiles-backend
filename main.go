@@ -5,13 +5,17 @@ import (
 	"log"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
+	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
+
+	jwtware "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -120,26 +124,28 @@ func main() {
 
 	app.Get("/checkpw/:id/:filename", file.CheckPasswordHandler)
 
-	// app.Use(jwtware.New(jwtware.Config{
-	// 	SigningKey:  []byte(os.Getenv("JWT_SECRET")),
-	// 	TokenLookup: "query:token",
-	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {
-	// 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 			"message": "Unauthorized",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	},
-	// 	Filter: func(c *fiber.Ctx) bool {
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
+		TokenLookup: "query:token",
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "Unauthorized",
+				"error":   err.Error(),
+			})
+		},
+		KeyFunc: jwt.IsMatched(),
+		Filter: func(c *fiber.Ctx) bool {
 
-	// 		fileName := strings.Split(c.OriginalURL(), "/")[2]
-	// 		if strings.Contains(fileName, "?") {
-	// 			fileName = strings.Split(fileName, "?")[0]
-	// 		}
-	// 		log.Println(fileName)
+			id := strings.Split(c.OriginalURL(), "/")[2]
+			fileName := strings.Split(c.OriginalURL(), "/")[3]
+			if strings.Contains(fileName, "?") {
+				fileName = strings.Split(fileName, "?")[0]
+			}
+			log.Printf("id: %v, filename: %v", id, fileName)
 
-	// 		return false
-	// 	},
-	// }))
+			return false
+		},
+	}))
 
 	app.Get("/file/:id/:filename", file.FileHandler)
 	app.Get("/dl/:id/:filename", file.DownloadHandler)

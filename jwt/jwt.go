@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -23,14 +24,30 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 	return t, exp, nil
 }
 
-func IsEncrypted(fileName string) bool {
-	FileTracking := new(database.FileTracking)
-	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(FileTracking)
+func IsEncrypted(id, fileName string) bool {
+	FileTracking := database.FileTracking{
+		FileName: fileName,
+		FileId:   id,
+	}
+
+	// var user = User{ID: 27}
+	has, err := database.Engine.Get(&FileTracking)
+
 	if err != nil {
 		return false
 	}
 	if !has {
 		return false
 	}
-	return FileTracking.IsEncrypted
+
+	return !FileTracking.IsEncrypted
+}
+
+func IsMatched() jwt.Keyfunc {
+	return func(token *jwt.Token) (interface{}, error) {
+		if !token.Claims.(jwt.MapClaims)["isAdmin"].(bool) {
+			return nil, fmt.Errorf("not admin")
+		}
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	}
 }
