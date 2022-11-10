@@ -1,4 +1,4 @@
-package newfile
+package file
 
 import (
 	"fmt"

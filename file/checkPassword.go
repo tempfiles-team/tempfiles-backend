@@ -1,4 +1,4 @@
-package newfile
+package file
 
 import (
 	"github.com/gofiber/fiber/v2"

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/minpeter/tempfiles-backend/database"
-	"github.com/minpeter/tempfiles-backend/newfile"
+	"github.com/minpeter/tempfiles-backend/file"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -41,7 +41,7 @@ func main() {
 
 	var err error
 
-	if newfile.CheckTmpFolder() != nil {
+	if file.CheckTmpFolder() != nil {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 
@@ -115,10 +115,10 @@ func main() {
 		}
 	})
 
-	app.Get("/list", newfile.ListHandler)
-	app.Post("/upload", newfile.UploadHandler)
+	app.Get("/list", file.ListHandler)
+	app.Post("/upload", file.UploadHandler)
 
-	app.Get("/checkpw/:id/:filename", newfile.CheckPasswordHandler)
+	app.Get("/checkpw/:id/:filename", file.CheckPasswordHandler)
 
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey:  []byte(os.Getenv("JWT_SECRET")),
@@ -141,9 +141,9 @@ func main() {
 	// 	},
 	// }))
 
-	app.Get("/file/:id/:filename", newfile.FileHandler)
-	app.Get("/dl/:id/:filename", newfile.DownloadHandler)
-	app.Delete("/del/:id/:filename", newfile.DeleteHandler)
+	app.Get("/file/:id/:filename", file.FileHandler)
+	app.Get("/dl/:id/:filename", file.DownloadHandler)
+	app.Delete("/del/:id/:filename", file.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
