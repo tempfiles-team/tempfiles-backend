@@ -3,6 +3,7 @@ package newfile
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minpeter/tempfiles-backend/database"
@@ -38,7 +39,7 @@ func FileHandler(c *fiber.Ctx) error {
 		"filename":     FileTracking.FileName,
 		"size":         FileTracking.FileSize,
 		"isEncrypted":  FileTracking.IsEncrypted,
-		"uploadDate":   FileTracking.UploadDate.Format("2000-00-00"),
+		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
 		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
 		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
 	})
