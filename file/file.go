@@ -25,7 +25,6 @@ func FileHandler(c *fiber.Ctx) error {
 		FileId:   id,
 	}
 
-	// var user = User{ID: 27}
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {

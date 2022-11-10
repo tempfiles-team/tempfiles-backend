@@ -125,7 +125,6 @@ func main() {
 	app.Get("/checkpw/:id/:filename", file.CheckPasswordHandler)
 
 	app.Use(jwtware.New(jwtware.Config{
-		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
 		TokenLookup: "query:token",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -133,9 +132,8 @@ func main() {
 				"error":   err.Error(),
 			})
 		},
-		KeyFunc: jwt.IsMatched(),
-		Filter: func(c *fiber.Ctx) bool {
 
+		Filter: func(c *fiber.Ctx) bool {
 			id := strings.Split(c.OriginalURL(), "/")[2]
 			fileName := strings.Split(c.OriginalURL(), "/")[3]
 			if strings.Contains(fileName, "?") {
@@ -143,8 +141,12 @@ func main() {
 			}
 			log.Printf("id: %v, filename: %v", id, fileName)
 
-			return false
+			jwt.FileId = id
+			jwt.FileName = fileName
+
+			return jwt.IsEncrypted(id, fileName)
 		},
+		KeyFunc: jwt.IsMatched(),
 	}))
 
 	app.Get("/file/:id/:filename", file.FileHandler)

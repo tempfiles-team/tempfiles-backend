@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -17,7 +16,7 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 	claims["file_id"] = FileTracking.FileId
 	claims["file_name"] = FileTracking.FileName
 	claims["exp"] = exp
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET") + FileTracking.FileId + FileTracking.FileName))
 	if err != nil {
 		return "", 0, err
 	}
@@ -30,9 +29,7 @@ func IsEncrypted(id, fileName string) bool {
 		FileId:   id,
 	}
 
-	// var user = User{ID: 27}
 	has, err := database.Engine.Get(&FileTracking)
-
 	if err != nil {
 		return false
 	}
@@ -43,11 +40,28 @@ func IsEncrypted(id, fileName string) bool {
 	return !FileTracking.IsEncrypted
 }
 
+var FileId string
+var FileName string
+
 func IsMatched() jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
-		if !token.Claims.(jwt.MapClaims)["isAdmin"].(bool) {
-			return nil, fmt.Errorf("not admin")
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return nil, nil
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		fileId, ok := claims["file_id"].(string)
+		if !ok {
+			return nil, nil
+		}
+		fileName, ok := claims["file_name"].(string)
+		if !ok {
+			return nil, nil
+		}
+
+		if fileId != FileId || fileName != FileName {
+			return nil, nil
+		}
+
+		return []byte(os.Getenv("JWT_SECRET") + fileId + fileName), nil
 	}
 }
