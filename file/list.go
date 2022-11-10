@@ -1,53 +1,24 @@
 package file
 
 import (
-	"context"
-	"time"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/minio/minio-go/v7"
-	"github.com/minpeter/tempfiles-backend/jwt"
+	"github.com/minpeter/tempfiles-backend/database"
 )
-
-type ResultStruct struct {
-	Filename     string `json:"filename"`
-	Size         int64  `json:"size"`
-	Expires      string `json:"expires"`
-	Filetype     string `json:"filetype"`
-	IsEncrypted  bool   `json:"isEncrypted"`
-	LastModified string `json:"lastModified"`
-}
 
 func ListHandler(c *fiber.Ctx) error {
 
-	objectCh := MinioClient.ListObjects(context.Background(), BucketName, minio.ListObjectsOptions{})
-
-	var result []ResultStruct
-
-	for object := range objectCh {
-		if object.Err != nil {
-			return c.Status(500).JSON(fiber.Map{
-				"message": "minio list error",
-				"error":   object.Err.Error(),
-			})
-		}
-
-		result = append(
-			result,
-			ResultStruct{
-				Filename:     object.Key,
-				Size:         object.Size,
-				Expires:      object.Expires.Format(time.RFC3339),
-				Filetype:     object.ContentType,
-				IsEncrypted:  jwt.IsEncrypted(object.Key),
-				LastModified: object.LastModified.Format(time.RFC3339),
-			})
+	var files []database.FileTracking
+	err := database.Engine.Find(&files)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "file list error",
+			"error":   err.Error(),
+		})
 	}
 
-	return c.JSON(fiber.Map{
-		"message":      "list success",
-		"success":      true,
-		"list":         result,
-		"numberOfList": len(result),
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":      "File list successfully",
+		"list":         files,
+		"numberOfList": len(files),
 	})
 }

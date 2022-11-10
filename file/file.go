@@ -1,4 +1,4 @@
-package newfile
+package file
 
 import (
 	"fmt"
@@ -13,12 +13,18 @@ func FileHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	fileName := c.Params("filename")
 
+	if fileName == "" || id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please provide a file id and filename",
+			"error":   nil,
+		})
+	}
+
 	FileTracking := database.FileTracking{
 		FileName: fileName,
 		FileId:   id,
 	}
 
-	// var user = User{ID: 27}
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
@@ -31,6 +37,7 @@ func FileHandler(c *fiber.Ctx) error {
 	if !has {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "file not found",
+			"error":   nil,
 		})
 	}
 
