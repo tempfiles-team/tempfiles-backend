@@ -5,16 +5,14 @@ import (
 	"log"
 	"math"
 	"os"
-	"strings"
 
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
+	"github.com/minpeter/tempfiles-backend/newfile"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
-
-	jwtware "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -47,6 +45,10 @@ func main() {
 	file.MinioClient, err = file.Connection()
 	if err != nil {
 		log.Fatalf("minio connection error: %v", err)
+	}
+
+	if newfile.CheckTmpFolder() != nil {
+		log.Fatalf("tmp folder error: %v", err)
 	}
 
 	database.Engine, err = database.CreateDBEngine()
@@ -119,35 +121,36 @@ func main() {
 		}
 	})
 
-	app.Get("/list", file.ListHandler)
+	app.Get("/list", newfile.ListHandler)
 
 	app.Get("/checkpw/:filename", file.CheckPasswordHandler)
 
-	app.Post("/upload", file.UploadHandler)
+	app.Post("/upload", newfile.UploadHandler)
 
-	app.Use(jwtware.New(jwtware.Config{
-		SigningKey:  []byte(os.Getenv("JWT_SECRET")),
-		TokenLookup: "query:token",
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "Unauthorized",
-				"error":   err.Error(),
-			})
-		},
-		Filter: func(c *fiber.Ctx) bool {
+	// app.Use(jwtware.New(jwtware.Config{
+	// 	SigningKey:  []byte(os.Getenv("JWT_SECRET")),
+	// 	TokenLookup: "query:token",
+	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {
+	// 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	// 			"message": "Unauthorized",
+	// 			"error":   err.Error(),
+	// 		})
+	// 	},
+	// 	Filter: func(c *fiber.Ctx) bool {
 
-			fileName := strings.Split(c.OriginalURL(), "/")[2]
-			if strings.Contains(fileName, "?") {
-				fileName = strings.Split(fileName, "?")[0]
-			}
-			log.Println(fileName)
+	// 		fileName := strings.Split(c.OriginalURL(), "/")[2]
+	// 		if strings.Contains(fileName, "?") {
+	// 			fileName = strings.Split(fileName, "?")[0]
+	// 		}
+	// 		log.Println(fileName)
 
-			return false
-		},
-	}))
+	// 		return false
+	// 	},
+	// }))
 
-	app.Get("/dl/:filename", file.OldDownloadHandler)
-	app.Delete("/del/:filename", file.DeleteHandler)
+	app.Get("/file/:id/:filename", newfile.FileHandler)
+	app.Get("/dl/:id/:filename", newfile.DownloadHandler)
+	app.Delete("/del/:id/:filename", newfile.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
