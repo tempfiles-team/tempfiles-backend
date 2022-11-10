@@ -19,8 +19,8 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	fileRow := new(database.FileRow)
-	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(fileRow)
+	FileTracking := new(database.FileTracking)
+	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(FileTracking)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "데이터베이스 에러",
@@ -36,7 +36,7 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(fileRow.Password), []byte(pw)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(FileTracking.Password), []byte(pw)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "비밀번호가 일치하지 않습니다.",
 			"error":   err.Error(),
@@ -44,7 +44,7 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	token, exp, err := jwt.CreateJWTToken(*fileRow)
+	token, exp, err := jwt.CreateJWTToken(*FileTracking)
 	if err != err {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "JWT 토큰 생성 에러",

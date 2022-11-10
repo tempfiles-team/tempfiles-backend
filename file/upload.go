@@ -34,15 +34,15 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	fileRow := &database.FileRow{
+	FileTracking := &database.FileTracking{
 		FileName: data.Filename,
-		FileType: data.Header["Content-Type"][0],
-		FileSize: data.Size,
-		Encrypto: pw != "",
-		Password: string(hash),
+		// FileType:    data.Header["Content-Type"][0],
+		FileSize:    data.Size,
+		IsEncrypted: pw != "",
+		Password:    string(hash),
 	}
 
-	_, err = database.Engine.Insert(fileRow)
+	_, err = database.Engine.Insert(FileTracking)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "database insert error",
@@ -50,7 +50,7 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	token, exp, err := jwt.CreateJWTToken(*fileRow)
+	token, exp, err := jwt.CreateJWTToken(*FileTracking)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": "jwt token creation error",
@@ -83,7 +83,7 @@ func UploadHandler(c *fiber.Ctx) error {
 
 	log.Printf("Successfully uploaded %s of size %d\n", objectName, info.Size)
 
-	if fileRow.Encrypto {
+	if FileTracking.IsEncrypted {
 		return c.JSON(fiber.Map{
 			"message":      "upload success",
 			"success":      true,
@@ -91,7 +91,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			"size":         info.Size,
 			"expires":      info.Expiration.Format(time.RFC3339),
 			"filetype":     contentType,
-			"isEncrypted":  fileRow.Encrypto,
+			"isEncrypted":  FileTracking.IsEncrypted,
 			"lastModified": info.LastModified.Format(time.RFC3339),
 			"token":        token,
 			"tokenExpires": exp,
@@ -106,7 +106,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			"size":         info.Size,
 			"expires":      info.Expiration.Format(time.RFC3339),
 			"filetype":     contentType,
-			"isEncrypted":  fileRow.Encrypto,
+			"isEncrypted":  FileTracking.IsEncrypted,
 			"lastModified": info.LastModified.Format(time.RFC3339),
 			"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
 			"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), info.Key),
