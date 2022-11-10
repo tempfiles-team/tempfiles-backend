@@ -13,6 +13,13 @@ func FileHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	fileName := c.Params("filename")
 
+	if fileName == "" || id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please provide a file id and filename",
+			"error":   nil,
+		})
+	}
+
 	FileTracking := database.FileTracking{
 		FileName: fileName,
 		FileId:   id,
