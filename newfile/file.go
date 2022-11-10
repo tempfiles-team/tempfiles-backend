@@ -31,6 +31,7 @@ func FileHandler(c *fiber.Ctx) error {
 	if !has {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "file not found",
+			"error":   nil,
 		})
 	}
 

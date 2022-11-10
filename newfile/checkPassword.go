@@ -8,29 +8,37 @@ import (
 )
 
 func CheckPasswordHandler(c *fiber.Ctx) error {
+	id := c.Params("id")
 	fileName := c.Params("filename")
+
 	pw := c.Query("pw", "")
 
-	if fileName == "" || pw == "" {
+	if fileName == "" || id == "" || pw == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "파일 이름 또는 비밀번호가 비어있습니다.",
+			"message": "Please provide a file id, filename and password",
 			"error":   nil,
 			"unlock":  false,
 		})
 	}
 
-	FileTracking := new(database.FileTracking)
-	has, err := database.Engine.Where("file_name = ?", fileName).Desc("id").Get(FileTracking)
+	FileTracking := &database.FileTracking{
+		FileName: fileName,
+		FileId:   id,
+	}
+
+	has, err := database.Engine.Get(&FileTracking)
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "데이터베이스 에러",
+			"message": "db query error",
 			"error":   err.Error(),
 			"unlock":  false,
 		})
 	}
+
 	if !has {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "파일이 존재하지 않습니다.",
+			"message": "file not found",
 			"error":   nil,
 			"unlock":  false,
 		})
@@ -38,16 +46,16 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(FileTracking.Password), []byte(pw)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "비밀번호가 일치하지 않습니다.",
+			"message": "password incorrect",
 			"error":   err.Error(),
 			"unlock":  false,
 		})
 	}
 
-	token, exp, err := jwt.CreateJWTToken(*FileTracking)
-	if err != err {
+	token, _, err := jwt.CreateJWTToken(*FileTracking)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "JWT 토큰 생성 에러",
+			"message": "jwt token creation error",
 			"error":   err.Error(),
 			"unlock":  false,
 		})
@@ -55,9 +63,8 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 
 	// jwt 토큰 생성
 	return c.JSON(fiber.Map{
-		"message":      "파일 비밀번호가 일치합니다.",
-		"token":        token,
-		"tokenExpires": exp,
-		"unlock":       true,
+		"message": "password correct",
+		"token":   token,
+		"unlock":  true,
 	})
 }

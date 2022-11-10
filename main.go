@@ -124,7 +124,7 @@ func main() {
 	app.Get("/list", newfile.ListHandler)
 	app.Post("/upload", newfile.UploadHandler)
 
-	app.Get("/checkpw/:id/:filename", file.CheckPasswordHandler)
+	app.Get("/checkpw/:id/:filename", newfile.CheckPasswordHandler)
 
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey:  []byte(os.Getenv("JWT_SECRET")),

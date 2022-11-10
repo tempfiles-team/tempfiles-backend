@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/minpeter/tempfiles-backend/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,6 +31,7 @@ func UploadHandler(c *fiber.Ctx) error {
 		IsEncrypted: password != "",
 	}
 
+	var token string = ""
 	if FileTracking.IsEncrypted {
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
@@ -39,6 +41,13 @@ func UploadHandler(c *fiber.Ctx) error {
 			})
 		}
 		FileTracking.Password = string(hash)
+		token, _, err = jwt.CreateJWTToken(*FileTracking)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "jwt token creation error",
+				"error":   err.Error(),
+			})
+		}
 	}
 
 	if CheckFileFolder(FileTracking.FileId) != nil {
@@ -73,5 +82,6 @@ func UploadHandler(c *fiber.Ctx) error {
 		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
 		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
 		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
+		"token":        token,
 	})
 }

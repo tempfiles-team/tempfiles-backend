@@ -12,10 +12,10 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 	exp := time.Now().Add(time.Minute * 10).Unix()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["file id"] = FileTracking.Id
+	claims["id"] = FileTracking.Id
+	claims["file_id"] = FileTracking.FileId
+	claims["file_name"] = FileTracking.FileName
 	claims["exp"] = exp
-	claims["encrypto"] = FileTracking.IsEncrypted
-	claims["isAdmin"] = false
 	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", 0, err
