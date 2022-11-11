@@ -7,15 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/file"
 	"github.com/minpeter/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	_ "github.com/joho/godotenv/autoload"
-
 	jwtware "github.com/gofiber/jwt/v3"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type LoginRequest struct {
@@ -31,12 +29,6 @@ func main() {
 	})
 
 	app.Use(
-		// cache.New(cache.Config{
-		// 	StoreResponseHeaders: true,
-		// 	Next: func(c *fiber.Ctx) bool {
-		// 		return c.Route().Path != "/dl/:filename"
-		// 	},
-		// }),
 		cors.New(cors.Config{
 			AllowOrigins: "*",
 			AllowHeaders: "Origin, Content-Type, Accept",
@@ -49,7 +41,6 @@ func main() {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 
-	database.Engine, err = database.CreateDBEngine()
 	if err != nil {
 		log.Fatalf("failed to create db engine: %v", err)
 	}

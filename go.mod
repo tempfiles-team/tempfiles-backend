@@ -9,8 +9,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/minio/minio-go/v7 v7.0.35
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
-	modernc.org/sqlite v1.19.3
+	modernc.org/sqlite v1.19.4
 	xorm.io/xorm v1.3.2
 )
 
@@ -40,6 +39,7 @@ require (
 	github.com/valyala/fasthttp v1.40.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/mod v0.3.0 // indirect
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.0.0-20201124115921-2c860bdd6e78 // indirect
@@ -47,8 +47,8 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
-	modernc.org/ccgo/v3 v3.16.13-0.20221017192402-261537637ce8 // indirect
-	modernc.org/libc v1.21.2 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.21.4 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.4.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
