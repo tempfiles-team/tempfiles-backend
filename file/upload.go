@@ -22,7 +22,7 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	FileTracking := database.FileTracking{
+	FileTracking := &database.FileTracking{
 		FileName:    data.Filename,
 		FileSize:    data.Size,
 		UploadDate:  time.Now(),
@@ -40,7 +40,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			})
 		}
 		FileTracking.Password = string(hash)
-		token, _, err = jwt.CreateJWTToken(FileTracking)
+		token, _, err = jwt.CreateJWTToken(*FileTracking)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "jwt token creation error",

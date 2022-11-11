@@ -14,8 +14,8 @@ type FileTracking struct {
 	FileId      string    `json:"fileId"`
 	FileName    string    `json:"filename"`
 	FileSize    int64     `json:"size"`
-	IsEncrypted bool      `json:"isEncrypted"`
 	UploadDate  time.Time `json:"uploadDate"`
+	IsEncrypted bool      `json:"isEncrypted"`
 	Password    string    `json:"-"`
 }
 
