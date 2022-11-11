@@ -3,7 +3,6 @@ package file
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -75,13 +74,12 @@ func UploadHandler(c *fiber.Ctx) error {
 	log.Printf("Successfully uploaded %s of size %d\n", FileTracking.FileName, FileTracking.FileSize)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":      "File uploaded successfully",
-		"filename":     FileTracking.FileName,
-		"size":         FileTracking.FileSize,
-		"isEncrypted":  FileTracking.IsEncrypted,
-		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
-		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
-		"token":        token,
+		"message":     "File uploaded successfully",
+		"fileId":      FileTracking.FileId,
+		"filename":    FileTracking.FileName,
+		"size":        FileTracking.FileSize,
+		"isEncrypted": FileTracking.IsEncrypted,
+		"uploadDate":  FileTracking.UploadDate.Format(time.RFC3339),
+		"token":       token,
 	})
 }

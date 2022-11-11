@@ -1,14 +1,11 @@
-FROM golang:1.19-alpine
+FROM ubuntu:latest
+
+RUN mkdir /app
 
 WORKDIR /app
 
-COPY . .
-RUN go mod download
-
-COPY *.go ./
-
-RUN go build -o ./tempfile-backend
+COPY ./tempfiles-backend ./tempfiles-backend
 
 EXPOSE 5000
 
-CMD [ "./tempfile-backend" ]
+CMD ["./tempfiles-backend"]

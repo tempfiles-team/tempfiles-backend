@@ -2,10 +2,10 @@
 
 frontend - https://github.com/ananjaemin/tempfiles-frontend
 
-Go로 제작된 간단한 minio restapi endpoint
-golang minio restapi wrapper
+tempfiles-backend is a backend for tempfiles-frontend.
 
 ## test server
+
 https://tfb.minpeter.cf
 
 - 업로드된 파일 조회  
@@ -19,4 +19,3 @@ https://tfb.minpeter.cf
 
 - 파일 삭제 delete/파일명  
   https://tfb.minpeter.cf/delete/semicolon.png
-
