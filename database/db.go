@@ -25,7 +25,7 @@ type FileTracking struct {
 var Engine *xorm.Engine
 
 func CreateDBEngine() (*xorm.Engine, error) {
-	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	connectionInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 	engine, err := xorm.NewEngine("postgres", connectionInfo)
 	// engine, err := xorm.NewEngine("sqlite", "./data.db")
