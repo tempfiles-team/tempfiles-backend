@@ -1,35 +1,45 @@
 package file
 
 import (
-	"log"
-	"net/url"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/minio/minio-go/v7"
-	"golang.org/x/net/context"
+	"github.com/minpeter/tempfiles-backend/database"
 )
 
 func DeleteHandler(c *fiber.Ctx) error {
+	id := c.Params("id")
+	fileName := c.Params("filename")
 
-	fileName, err := url.QueryUnescape(c.Params("filename"))
-
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio delete error",
-			"error":   err.Error(),
+	if fileName == "" || id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Please provide a file id and filename",
+			"error":   nil,
+			"delete":  false,
 		})
 	}
 
-	if err := MinioClient.RemoveObject(context.Background(), BucketName, fileName, minio.RemoveObjectOptions{}); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "minio delete error",
+	if err := os.Remove("tmp/" + id + "/" + fileName); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "file delete error",
 			"error":   err.Error(),
+			"delete":  false,
 		})
 	}
-	log.Printf("Successfully deleted %s\n", fileName)
 
-	return c.JSON(fiber.Map{
-		"message": "delete success",
-		"success": true,
+	//db에서 삭제
+	if _, err := database.Engine.Delete(&database.FileTracking{FileId: id, FileName: fileName}); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "db delete error",
+			"error":   err.Error(),
+			"delete":  false,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "File deleted successfully",
+		"error":   nil,
+		"delete":  true,
 	})
+
 }
