@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/url"
 	"os"
 	"strings"
 
@@ -128,14 +129,21 @@ func main() {
 		TokenLookup: "query:token",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "Unauthorized",
+				"message": "Unauthorized or Bad Request",
 				"error":   err.Error(),
 			})
 		},
 
 		Filter: func(c *fiber.Ctx) bool {
+
+			//id or filename이 없으면 jwt 검사 안함
+			if len(strings.Split(c.OriginalURL(), "/")) != 4 {
+				// 핸들러가 알아서 에러를 반환함
+				return false
+			}
+
 			id := strings.Split(c.OriginalURL(), "/")[2]
-			fileName := strings.Split(c.OriginalURL(), "/")[3]
+			fileName, _ := url.PathUnescape(strings.Split(c.OriginalURL(), "/")[3])
 			if strings.Contains(fileName, "?") {
 				fileName = strings.Split(fileName, "?")[0]
 			}

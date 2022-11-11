@@ -8,7 +8,7 @@ import (
 
 func DownloadHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName := c.Params("filename")
+	fileName, _ := url.PathUnescape(c.Params("filename"))
 
 	if fileName == "" || id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -18,5 +18,6 @@ func DownloadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Download("tmp/"+id+"/"+fileName, url.PathEscape(fileName))
+	c.Attachment()
+	return c.SendFile("tmp/" + id + "/" + fileName)
 }

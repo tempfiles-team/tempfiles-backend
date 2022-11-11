@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 func FileHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName := c.Params("filename")
+	fileName, _ := url.PathUnescape(c.Params("filename"))
 
 	if fileName == "" || id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

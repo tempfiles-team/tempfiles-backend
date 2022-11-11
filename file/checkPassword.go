@@ -1,6 +1,8 @@
 package file
 
 import (
+	"net/url"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/jwt"
@@ -9,7 +11,7 @@ import (
 
 func CheckPasswordHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName := c.Params("filename")
+	fileName, _ := url.PathUnescape(c.Params("filename"))
 
 	pw := c.Query("pw", "")
 

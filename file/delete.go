@@ -1,6 +1,7 @@
 package file
 
 import (
+	"net/url"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,7 @@ import (
 
 func DeleteHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName := c.Params("filename")
+	fileName, _ := url.PathUnescape(c.Params("filename"))
 
 	if fileName == "" || id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
