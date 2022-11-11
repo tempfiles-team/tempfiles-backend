@@ -69,28 +69,28 @@ func main() {
 				"apiName": "/upload",
 				"method":  "POST",
 				"desc":    "특정 파일을 서버에 업로드합니다.",
-				"command": "curl -X POST -F 'file=@[filepath or filename]' https://tfb.minpeter.cf/upload",
+				"command": "curl -X POST -F 'file=@[filepath or filename]' https://api.tempfiles.ml/upload",
 			})
 		case "list":
 			return c.JSON(fiber.Map{
 				"apiName": "/list",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
-				"command": "curl https://tfb.minpeter.cf/list",
+				"command": "curl https://api.tempfiles.ml/list",
 			})
 		case "del":
 			return c.JSON(fiber.Map{
 				"apiName": "/del/[filename]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
-				"command": "curl -X DELETE https://tfb.minpeter.cf/del/[filename]",
+				"command": "curl -X DELETE https://api.tempfiles.ml/del/[filename]",
 			})
 		case "dl":
 			return c.JSON(fiber.Map{
 				"apiName": "/dl/[filename]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
-				"command": "curl -O https://tfb.minpeter.cf/dl/[filename]",
+				"command": "curl -O https://api.tempfiles.ml/dl/[filename]",
 			})
 		case "":
 			backendUrl := os.Getenv("BACKEND_BASEURL")
