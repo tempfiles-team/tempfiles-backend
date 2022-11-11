@@ -1,11 +1,14 @@
 package database
 
 import (
-	// _ "github.com/lib/pq"
+	"fmt"
+	"os"
+
+	_ "github.com/lib/pq"
+	// _ "modernc.org/sqlite"
 
 	"time"
 
-	_ "modernc.org/sqlite"
 	"xorm.io/xorm"
 )
 
@@ -22,9 +25,10 @@ type FileTracking struct {
 var Engine *xorm.Engine
 
 func CreateDBEngine() (*xorm.Engine, error) {
-	// connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", "localhost", 5432, "postgres", "qwer1234", "localAuth")
-	// engine, err := xorm.NewEngine("postgres", connectionInfo)
-	engine, err := xorm.NewEngine("sqlite", "./data.db")
+	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+	engine, err := xorm.NewEngine("postgres", connectionInfo)
+	// engine, err := xorm.NewEngine("sqlite", "./data.db")
 	randInit()
 
 	if err != nil {
