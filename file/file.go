@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -48,8 +49,8 @@ func FileHandler(c *fiber.Ctx) error {
 		"size":         FileTracking.FileSize,
 		"isEncrypted":  FileTracking.IsEncrypted,
 		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
-		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, FileTracking.FileName),
+		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, strings.ReplaceAll(FileTracking.FileName, " ", "%20")),
+		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, strings.ReplaceAll(FileTracking.FileName, " ", "%20")),
 	})
 
 }
