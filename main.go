@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"net/url"
 	"os"
 	"strings"
 
@@ -123,7 +122,7 @@ func main() {
 	app.Get("/list", file.ListHandler)
 	app.Post("/upload", file.UploadHandler)
 
-	app.Get("/checkpw/:id/:filename", file.CheckPasswordHandler)
+	app.Get("/checkpw/:id", file.CheckPasswordHandler)
 
 	app.Use(jwtware.New(jwtware.Config{
 		TokenLookup: "query:token",
@@ -137,29 +136,27 @@ func main() {
 		Filter: func(c *fiber.Ctx) bool {
 
 			//id or filename이 없으면 jwt 검사 안함
-			if len(strings.Split(c.OriginalURL(), "/")) != 4 {
+			if len(strings.Split(c.OriginalURL(), "/")) != 3 {
 				// 핸들러가 알아서 에러를 반환함
 				return false
 			}
 
 			id := strings.Split(c.OriginalURL(), "/")[2]
-			fileName, _ := url.PathUnescape(strings.Split(c.OriginalURL(), "/")[3])
-			if strings.Contains(fileName, "?") {
-				fileName = strings.Split(fileName, "?")[0]
+			if strings.Contains(id, "?") {
+				id = strings.Split(id, "?")[0]
 			}
-			log.Printf("id: %v, filename: %v", id, fileName)
+			log.Printf("id: %v", id)
 
 			jwt.FileId = id
-			jwt.FileName = fileName
 
-			return jwt.IsEncrypted(id, fileName)
+			return jwt.IsEncrypted(id)
 		},
 		KeyFunc: jwt.IsMatched(),
 	}))
 
-	app.Get("/file/:id/:filename", file.FileHandler)
-	app.Get("/dl/:id/:filename", file.DownloadHandler)
-	app.Delete("/del/:id/:filename", file.DeleteHandler)
+	app.Get("/file/:id", file.FileHandler)
+	app.Get("/dl/:id", file.DownloadHandler)
+	app.Delete("/del/:id", file.DeleteHandler)
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 

@@ -1,8 +1,6 @@
 package file
 
 import (
-	"net/url"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/minpeter/tempfiles-backend/database"
 	"github.com/minpeter/tempfiles-backend/jwt"
@@ -11,21 +9,19 @@ import (
 
 func CheckPasswordHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName, _ := url.PathUnescape(c.Params("filename"))
 
 	pw := c.Query("pw", "")
 
-	if fileName == "" || id == "" || pw == "" {
+	if id == "" || pw == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a file id, filename and password",
+			"message": "Please provide a file id and password",
 			"error":   nil,
 			"unlock":  false,
 		})
 	}
 
 	FileTracking := database.FileTracking{
-		FileName: fileName,
-		FileId:   id,
+		FileId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
