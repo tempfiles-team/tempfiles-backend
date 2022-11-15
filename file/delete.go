@@ -38,7 +38,7 @@ func DeleteHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := os.Remove("tmp/" + FileTracking.FileId + "/" + FileTracking.FileName); err != nil {
+	if err := os.RemoveAll("tmp/" + FileTracking.FileId); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "file delete error",
 			"error":   err.Error(),
