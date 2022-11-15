@@ -77,19 +77,26 @@ func main() {
 				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
 				"command": "curl https://api.tempfiles.ml/list",
 			})
+		case "file":
+			return c.JSON(fiber.Map{
+				"apiName": "/file/[file_id]",
+				"method":  "GET",
+				"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
+				"command": "curl https://api.tempfiles.ml/file/[file_id]",
+			})
 		case "del":
 			return c.JSON(fiber.Map{
-				"apiName": "/del/[filename]",
+				"apiName": "/del/[file_id]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
-				"command": "curl -X DELETE https://api.tempfiles.ml/del/[filename]",
+				"command": "curl -X DELETE https://api.tempfiles.ml/del/[file_id]",
 			})
 		case "dl":
 			return c.JSON(fiber.Map{
-				"apiName": "/dl/[filename]",
+				"apiName": "/dl/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
-				"command": "curl -O https://api.tempfiles.ml/dl/[filename]",
+				"command": "curl -O https://api.tempfiles.ml/dl/[file_id]",
 			})
 		case "":
 			backendUrl := os.Getenv("BACKEND_BASEURL")
@@ -103,11 +110,15 @@ func main() {
 					"apiHandler": "list",
 				},
 				{
-					"apiUrl":     backendUrl + "/del/[filename]",
+					"apiUrl":     backendUrl + "/file/[file_id]",
+					"apiHandler": "file",
+				},
+				{
+					"apiUrl":     backendUrl + "/del/[file_id]",
 					"apiHandler": "del",
 				},
 				{
-					"apiUrl":     backendUrl + "/dl/[filename]",
+					"apiUrl":     backendUrl + "/dl/[file_id]",
 					"apiHandler": "dl",
 				},
 			})
