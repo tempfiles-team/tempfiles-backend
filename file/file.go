@@ -2,9 +2,7 @@ package file
 
 import (
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,18 +11,16 @@ import (
 
 func FileHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName, _ := url.PathUnescape(c.Params("filename"))
 
-	if fileName == "" || id == "" {
+	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a file id and filename",
+			"message": "Please provide a file id",
 			"error":   nil,
 		})
 	}
 
 	FileTracking := database.FileTracking{
-		FileName: fileName,
-		FileId:   id,
+		FileId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
@@ -49,8 +45,8 @@ func FileHandler(c *fiber.Ctx) error {
 		"size":         FileTracking.FileSize,
 		"isEncrypted":  FileTracking.IsEncrypted,
 		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":   fmt.Sprintf("%s/del/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, strings.ReplaceAll(FileTracking.FileName, " ", "%20")),
-		"download_url": fmt.Sprintf("%s/dl/%s/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId, strings.ReplaceAll(FileTracking.FileName, " ", "%20")),
+		"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
+		"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
 	})
 
 }

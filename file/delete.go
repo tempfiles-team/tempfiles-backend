@@ -1,7 +1,6 @@
 package file
 
 import (
-	"net/url"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,17 +9,36 @@ import (
 
 func DeleteHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fileName, _ := url.PathUnescape(c.Params("filename"))
 
-	if fileName == "" || id == "" {
+	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a file id and filename",
+			"message": "Please provide a file id",
 			"error":   nil,
 			"delete":  false,
 		})
 	}
 
-	if err := os.Remove("tmp/" + id + "/" + fileName); err != nil {
+	FileTracking := database.FileTracking{
+		FileId: id,
+	}
+
+	has, err := database.Engine.Get(&FileTracking)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "db query error",
+			"error":   err.Error(),
+		})
+	}
+
+	if !has {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "file not found",
+			"error":   nil,
+		})
+	}
+
+	if err := os.Remove("tmp/" + FileTracking.FileId + "/" + FileTracking.FileName); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "file delete error",
 			"error":   err.Error(),
@@ -29,7 +47,7 @@ func DeleteHandler(c *fiber.Ctx) error {
 	}
 
 	//db에서 삭제
-	if _, err := database.Engine.Delete(&database.FileTracking{FileId: id, FileName: fileName}); err != nil {
+	if _, err := database.Engine.Delete(&FileTracking); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "db delete error",
 			"error":   err.Error(),
