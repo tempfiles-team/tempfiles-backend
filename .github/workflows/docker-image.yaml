@@ -29,14 +29,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --rm-dist --skip-validate
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: go build -o tempfiles-backend .
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -55,6 +49,6 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/arm64
+          # platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tempfiles-backend:latest
