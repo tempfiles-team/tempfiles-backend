@@ -1,4 +1,4 @@
-FROM scratch:latest
+FROM ubuntu:latest
 
 ARG TARGETARCH
 
