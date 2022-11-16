@@ -5,7 +5,9 @@ before:
     # You may remove this if you don't use go modules.
     - go mod tidy
 builds:
-  - env:
+  - binary: tempfiles-backend
+    id: tempfile-backend
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
@@ -15,7 +17,8 @@ builds:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  # name_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
