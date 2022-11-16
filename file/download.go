@@ -36,6 +36,5 @@ func DownloadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Attachment()
-	return c.SendFile("tmp/" + FileTracking.FileId + "/" + FileTracking.FileName)
+	return c.Download("tmp/" + FileTracking.FileId + "/" + FileTracking.FileName)
 }
