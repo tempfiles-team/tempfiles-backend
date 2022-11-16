@@ -143,9 +143,10 @@ func main() {
 				"error":   err.Error(),
 			})
 		},
-
+		
+		app.Get("/file/:id", file.FileHandler)
+		
 		Filter: func(c *fiber.Ctx) bool {
-
 			//id or filename이 없으면 jwt 검사 안함
 			if len(strings.Split(c.OriginalURL(), "/")) != 3 {
 				// 핸들러가 알아서 에러를 반환함
@@ -165,7 +166,6 @@ func main() {
 		KeyFunc: jwt.IsMatched(),
 	}))
 
-	app.Get("/file/:id", file.FileHandler)
 	app.Get("/dl/:id", file.DownloadHandler)
 	app.Delete("/del/:id", file.DeleteHandler)
 
