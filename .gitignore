@@ -1,3 +1,5 @@
 tempfiles-backend
 *.db
 tmp
+
+dist/

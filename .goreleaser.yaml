@@ -1,43 +1,30 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-
-# Make sure to check the documentation at http://goreleaser.com
-
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
 before:
-hooks: # You may remove this if you don't use go modules. - go mod download # you may remove this if you don't need go generate
-
-# - go generate ./...
-
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
 builds:
-
-- binary: tempfiles-backend
-  id: tempfiles-backend
-  goos:
-  - linux
-  goarch:
-  - amd64
-  - arm64
-  - arm/v7
-- binary: tempfiles-backend_mac
-  id: tempfiles-backend_mac
-  goos:
-  - darwin
-  goarch:
-  - amd64
-  checksum:
-  name_template: 'checksums.txt'
-  snapshot:
-  name_template: "{{ .Tag }}-next"
-  changelog:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
   sort: asc
   filters:
-  exclude:
-  - '^docs:'
-  - '^test:'
-  nfpms:
-- maintainer: minpeter <kali2005611@gmail.com>
-  description: Go Build MultiArch tempfiles-backend
-  homepage: https://api.tempfiles.ml
-  license: MIT
-  formats:
-  - deb
-  - apk
+    exclude:
+      - "^docs:"
+      - "^test:"
+# modelines, feel free to remove those if you don't want/use them:
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj

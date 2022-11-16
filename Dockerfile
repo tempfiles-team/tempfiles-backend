@@ -4,7 +4,7 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-COPY dist/go_multiarch_linux_$TARGETARCH/go_multiarch /
+COPY dist/tempfiles-backend_linux_$TARGETARCH/tempfiles-backend /
 
 EXPOSE 5000
 
