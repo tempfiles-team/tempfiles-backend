@@ -1,11 +1,11 @@
-FROM ubuntu:latest
+FROM scratch:latest
 
-RUN mkdir /app
+ARG TARGETARCH
 
 WORKDIR /app
 
-COPY ./tempfiles-backend ./tempfiles-backend
+COPY dist/go_multiarch_linux_$TARGETARCH/go_multiarch /
 
 EXPOSE 5000
 
-CMD ["./tempfiles-backend"]
+CMD ["/app/tempfiles-backend"]
