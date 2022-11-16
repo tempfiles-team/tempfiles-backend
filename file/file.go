@@ -40,13 +40,14 @@ func FileHandler(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":      "file found",
-		"filename":     FileTracking.FileName,
-		"size":         FileTracking.FileSize,
-		"isEncrypted":  FileTracking.IsEncrypted,
-		"uploadDate":   FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":   fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
-		"download_url": fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
+		"message":       "file found",
+		"filename":      FileTracking.FileName,
+		"size":          FileTracking.FileSize,
+		"isEncrypted":   FileTracking.IsEncrypted,
+		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
+		"delete_url":    fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
+		"download_url":  fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
+		"provide_token": c.Query("token") != "",
 	})
 
 }
