@@ -133,6 +133,7 @@ func main() {
 	app.Get("/list", file.ListHandler)
 	app.Post("/upload", file.UploadHandler)
 
+	app.Get("/file/:id", file.FileHandler)
 	app.Get("/checkpw/:id", file.CheckPasswordHandler)
 
 	app.Use(jwtware.New(jwtware.Config{
@@ -143,9 +144,7 @@ func main() {
 				"error":   err.Error(),
 			})
 		},
-		
-		app.Get("/file/:id", file.FileHandler)
-		
+
 		Filter: func(c *fiber.Ctx) bool {
 			//id or filename이 없으면 jwt 검사 안함
 			if len(strings.Split(c.OriginalURL(), "/")) != 3 {
