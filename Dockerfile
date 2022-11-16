@@ -4,7 +4,7 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-COPY /dist/tempfiles-backend_linux_$TARGETARCH/tempfiles-backend /
+COPY /dist/tempfiles-backend_linux_arm_7/tempfiles-backend /
 
 EXPOSE 5000
 
