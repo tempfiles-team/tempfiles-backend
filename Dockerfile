@@ -1,10 +1,10 @@
 FROM ubuntu:latest
 
-ARG TARGETPLATFORM
+ARG TARGETARCH
 
 WORKDIR /app
 
-COPY /dist/tempfiles-backend_$TARGETPLATFORM/tempfiles-backend /
+COPY /dist/tempfiles-backend_linux_$TARGETARCH/tempfiles-backend /
 
 EXPOSE 5000
 
