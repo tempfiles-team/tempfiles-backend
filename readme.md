@@ -1,21 +1,21 @@
 ## tempfiles-backend
 
-frontend - https://github.com/ananjaemin/tempfiles-frontend
+frontend - https://github.com/tempfiles-backend/tempfiles-frontend
 
 tempfiles-backend is a backend for tempfiles-frontend.
 
 ## test server
 
-https://tfb.minpeter.cf
+https://api.tempfiles.ml
 
 - 업로드된 파일 조회  
-  https://tfb.minpeter.cf/list
+  https://api.tempfiles.ml/list
 
 - 파일 업로드 (POST 멀티폼에 file로 업로드)  
-  https://tfb.minpeter.cf/upload
+  https://api.tempfiles.ml/upload
 
 - 파일 다운로드 dl/파일명  
-  https://tfb.minpeter.cf/dl/meas.png
+  https://api.tempfiles.ml/dl/(file_id)
 
 - 파일 삭제 delete/파일명  
-  https://tfb.minpeter.cf/delete/semicolon.png
+  https://api.tempfiles.ml/del/(file_id)
