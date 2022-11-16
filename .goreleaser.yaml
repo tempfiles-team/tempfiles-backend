@@ -19,8 +19,10 @@ builds:
   - arm/v7
 - binary: tempfiles-backend_mac
   id: tempfiles-backend_mac
-  goos: - darwin
-  goarch: - amd64
+  goos:
+  - darwin
+  goarch:
+  - amd64
   checksum:
   name_template: 'checksums.txt'
   snapshot:
@@ -28,7 +30,9 @@ builds:
   changelog:
   sort: asc
   filters:
-  exclude: - '^docs:' - '^test:'
+  exclude:
+  - '^docs:'
+  - '^test:'
   nfpms:
 - maintainer: minpeter <kali2005611@gmail.com>
   description: Go Build MultiArch tempfiles-backend
