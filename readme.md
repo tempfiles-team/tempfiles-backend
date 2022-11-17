@@ -1,6 +1,6 @@
 ## tempfiles-backend
 
-frontend - https://github.com/tempfiles-backend/tempfiles-frontend
+frontend - https://github.com/tempfiles-Team/tempfiles-frontend
 
 tempfiles-backend is a backend for tempfiles-frontend.
 
