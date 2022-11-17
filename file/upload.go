@@ -21,14 +21,20 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	//업로드 용량 50MB 제한
+	log.Println(data.Size)
+	if data.Size > int64(1024*1024*50) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "File size limit exceeded",
+			"error":   nil,
+		})
+	}
+
 	password := c.Query("pw", "")
 
 	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "wrong X-Download-Limit header",
-			"error":   err.Error(),
-		})
+		downloadLimit = 0
 	}
 	// expireTime := c.Request().Header.Peek("X-Expire-Time")
 
