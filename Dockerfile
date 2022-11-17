@@ -15,7 +15,6 @@ FROM ubuntu:latest
 WORKDIR /app
 
 COPY --from=builder /dist/tempfiles-backend .
-COPY .env .
 
 EXPOSE 5000
 

@@ -1,5 +1,4 @@
 tempfiles-backend
 *.db
 tmp
-
-dist/
+composeTmp

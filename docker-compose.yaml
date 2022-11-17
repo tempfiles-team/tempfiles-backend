@@ -1,0 +1,40 @@
+version: "3"
+services:
+  tempfiles-backend:
+    container_name: tempfiles-backend
+    build: .
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - BACKEND_BASE_URL=http://localhost:5000
+      - BACKEND_PORT=5000
+      - JWT_SECRET=simplesecret
+      - DB_HOST=tempfiles-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USER=admin
+      - DB_PASSWORD=admin
+    depends_on:
+      - tempfiles-db
+    volumes:
+      - ./composeTmp:/app/tmp
+    networks:
+      - tempfiles-network
+  tempfiles-db:
+    container_name: tempfiles-db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./composeTmp/db:/var/lib/postgresql/data
+    networks:
+      - tempfiles-network
+
+networks:
+  tempfiles-network:
