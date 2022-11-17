@@ -3,6 +3,7 @@ package file
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,8 +14,6 @@ import (
 
 func UploadHandler(c *fiber.Ctx) error {
 	data, err := c.FormFile("file")
-	password := c.Query("pw", "")
-
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Please upload a file (multipart/form-data)",
@@ -22,12 +21,24 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	password := c.Query("pw", "")
+
+	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "wrong X-Download-Limit header",
+			"error":   err.Error(),
+		})
+	}
+	// expireTime := c.Request().Header.Peek("X-Expire-Time")
+
 	FileTracking := &database.FileTracking{
-		FileName:    data.Filename,
-		FileSize:    data.Size,
-		UploadDate:  time.Now(),
-		FileId:      database.RandString(),
-		IsEncrypted: password != "",
+		FileName:      data.Filename,
+		FileSize:      data.Size,
+		UploadDate:    time.Now(),
+		FileId:        database.RandString(),
+		IsEncrypted:   password != "",
+		DownloadLimit: int64(downloadLimit),
 	}
 
 	var token string = ""
@@ -71,15 +82,17 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Printf("Successfully uploaded %s of size %d\n", FileTracking.FileName, FileTracking.FileSize)
+	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileTracking.FileName, FileTracking.FileSize, FileTracking.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":     "File uploaded successfully",
-		"fileId":      FileTracking.FileId,
-		"filename":    FileTracking.FileName,
-		"size":        FileTracking.FileSize,
-		"isEncrypted": FileTracking.IsEncrypted,
-		"uploadDate":  FileTracking.UploadDate.Format(time.RFC3339),
-		"token":       token,
+		"message":       "File uploaded successfully",
+		"fileId":        FileTracking.FileId,
+		"filename":      FileTracking.FileName,
+		"size":          FileTracking.FileSize,
+		"isEncrypted":   FileTracking.IsEncrypted,
+		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
+		"token":         token,
+		"downloadLimit": FileTracking.DownloadLimit,
+		"downloadCount": FileTracking.DownloadCount,
 	})
 }

@@ -2,6 +2,7 @@ package file
 
 import (
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,6 +37,44 @@ func DownloadHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "file not found",
 			"error":   nil,
+		})
+	}
+
+	// Download Limit check
+	if FileTracking.DownloadLimit > 0 {
+		if FileTracking.DownloadLimit <= FileTracking.DownloadCount {
+			// Download Limit exceeded -> file delete
+			if err := os.RemoveAll("tmp/" + FileTracking.FileId); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "file delete error",
+					"error":   err.Error(),
+					"delete":  false,
+				})
+			}
+
+			//db에서 삭제
+			if _, err := database.Engine.Delete(&FileTracking); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "db delete error",
+					"error":   err.Error(),
+					"delete":  false,
+				})
+			}
+
+			return c.Status(fiber.StatusGone).JSON(fiber.Map{
+				"message": "download limit exceeded",
+				"error":   nil,
+				"delete":  true,
+			})
+		}
+	}
+
+	// db DownloadCount +1
+	FileTracking.DownloadCount++
+	if _, err := database.Engine.ID(FileTracking.Id).Update(&FileTracking); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "db update error",
+			"error":   err.Error(),
 		})
 	}
 
