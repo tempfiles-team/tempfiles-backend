@@ -2,8 +2,8 @@ package file
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/minpeter/tempfiles-backend/database"
-	"github.com/minpeter/tempfiles-backend/jwt"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 

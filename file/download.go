@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 func DownloadHandler(c *fiber.Ctx) error {

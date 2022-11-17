@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
