@@ -36,7 +36,14 @@ func UploadHandler(c *fiber.Ctx) error {
 	if err != nil {
 		downloadLimit = 0
 	}
-	// expireTime := c.Request().Header.Peek("X-Expire-Time")
+	expireTime, err := strconv.Atoi(string(c.Request().Header.Peek("X-Time-Limit")))
+	var expireTimeDate time.Time
+	if err != nil || expireTime < 0 || expireTime == 0 {
+		// 기본 3시간 후 만료
+		expireTimeDate = time.Now().Add(time.Duration(60*3) * time.Minute)
+	} else {
+		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
+	}
 
 	FileTracking := &database.FileTracking{
 		FileName:      data.Filename,
@@ -45,6 +52,7 @@ func UploadHandler(c *fiber.Ctx) error {
 		FileId:        database.RandString(),
 		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),
+		ExpireTime:    expireTimeDate,
 	}
 
 	var token string = ""
@@ -100,5 +108,6 @@ func UploadHandler(c *fiber.Ctx) error {
 		"token":         token,
 		"downloadLimit": FileTracking.DownloadLimit,
 		"downloadCount": FileTracking.DownloadCount,
+		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
 	})
 }

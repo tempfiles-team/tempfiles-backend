@@ -50,5 +50,6 @@ func FileHandler(c *fiber.Ctx) error {
 		"provide_token": c.Query("token") != "",
 		"downloadLimit": FileTracking.DownloadLimit,
 		"downloadCount": FileTracking.DownloadCount,
+		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
 	})
 }
