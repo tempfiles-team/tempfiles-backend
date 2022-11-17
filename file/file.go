@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 func FileHandler(c *fiber.Ctx) error {
@@ -48,6 +48,7 @@ func FileHandler(c *fiber.Ctx) error {
 		"delete_url":    fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
 		"download_url":  fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
 		"provide_token": c.Query("token") != "",
+		"downloadLimit": FileTracking.DownloadLimit,
+		"downloadCount": FileTracking.DownloadCount,
 	})
-
 }

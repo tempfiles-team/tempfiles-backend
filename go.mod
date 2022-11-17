@@ -1,4 +1,4 @@
-module github.com/minpeter/tempfiles-backend
+module github.com/tempfiles-Team/tempfiles-backend
 
 go 1.19
 

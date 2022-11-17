@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/minpeter/tempfiles-backend/database"
-	"github.com/minpeter/tempfiles-backend/file"
-	"github.com/minpeter/tempfiles-backend/jwt"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/file"
+	"github.com/tempfiles-Team/tempfiles-backend/jwt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

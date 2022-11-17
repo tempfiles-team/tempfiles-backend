@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/minpeter/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 func DeleteHandler(c *fiber.Ctx) error {
