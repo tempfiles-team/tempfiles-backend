@@ -21,13 +21,22 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	//업로드 용량 50MB 제한
+	log.Println(data.Size)
+	if data.Size > int64(1024*1024*50) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "File size limit exceeded",
+			"error":   nil,
+		})
+	}
+
 	password := c.Query("pw", "")
 
 	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
 	if err != nil {
 		downloadLimit = 0
 	}
-	expireTime, err := strconv.Atoi(string(c.Request().Header.Peek("X-Expire-Time")))
+	expireTime, err := strconv.Atoi(string(c.Request().Header.Peek("X-Time-Limit")))
 	var expireTimeDate time.Time
 	if err != nil || expireTime < 0 || expireTime == 0 {
 		// 기본 3시간 후 만료
