@@ -40,7 +40,7 @@ func main() {
 		// }),
 		cors.New(cors.Config{
 			AllowOrigins: "*",
-			AllowHeaders: "Origin, Content-Type, Accept",
+			AllowHeaders: "Origin, Content-Type, Accept, X-Download-Limit, X-Time-Limit",
 			AllowMethods: "GET, POST, DELETE",
 		}))
 
