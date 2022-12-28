@@ -23,7 +23,7 @@ func UploadHandler(c *fiber.Ctx) error {
 
 	//업로드 용량 50MB 제한
 	log.Println(data.Size)
-	if data.Size > int64(1024*1024*50) {
+	if data.Size > int64(1024*1024*300) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "File size limit exceeded",
 			"error":   nil,
