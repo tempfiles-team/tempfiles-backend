@@ -10,7 +10,7 @@ COPY --from=modules /go/pkg /go/pkg
 COPY . /app
 ENV CGO_ENABLED=0
 WORKDIR /app
-RUN go build -o -o /bin/app .
+RUN go build -o /bin/app .
 
 # GOPATH for scratch images is /
 FROM scratch
