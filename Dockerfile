@@ -1,21 +1,19 @@
+# Step 1: Modules caching
+FROM golang:1.19.4-alpine as modules
+COPY go.mod go.sum /modules/
+WORKDIR /modules
+RUN go mod download
+
+# Step 2: Builder
 FROM golang:1.19 AS builder
-
+COPY --from=modules /go/pkg /go/pkg
+COPY . /app
 WORKDIR /app
-
-COPY . .
-
 RUN go build -o tempfiles-backend .
 
-WORKDIR /dist
-
-RUN cp /app/tempfiles-backend .
-
-FROM ubuntu:latest
-
+# GOPATH for scratch images is /
+FROM scratch
 WORKDIR /app
-
-COPY --from=builder /dist/tempfiles-backend .
-
+COPY --from=builder /app/tempfiles-backend .
 EXPOSE 5000
-
 CMD ["./tempfiles-backend"]
