@@ -32,7 +32,6 @@ docker run -dp 5000:5000 \
 ## How to run - local
 
 1. config .env file
-
 ### nessary
 
 |       key       |         value         |   description    |
@@ -65,8 +64,8 @@ https://api.tempfiles.ml
 - 파일 목록 조회 [Get]
   https://api.tempfiles.ml/list
 
-- 파일 업로드 [Post]
-  multipart/form-data "file" 필드에 업로드할 파일을 넣어서 요청
+- 파일 업로드 [Post]  
+  multipart/form-data "file" 필드에 업로드할 파일을 넣어서 요청  
   https://api.tempfiles.ml/upload
 
 - 파일 다운로드 [Get]
