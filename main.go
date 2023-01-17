@@ -28,7 +28,7 @@ func main() {
 
 	app := fiber.New(fiber.Config{
 		AppName:   "tempfiles-backend",
-		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte
+		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte, = 1GB
 	})
 
 	app.Use(
