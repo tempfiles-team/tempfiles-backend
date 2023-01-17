@@ -232,6 +232,10 @@ func main() {
 	app.Get("/dl/:id", file.DownloadHandler)
 	app.Delete("/del/:id", file.DeleteHandler)
 
+	if os.Getenv("BACKEND_PORT") == "" {
+		os.Setenv("BACKEND_PORT", "5000")
+	}
+
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
 	terminator.Stop()
