@@ -1,9 +1,9 @@
-version: "3"
+version: "3.8"
 services:
   tempfiles-backend:
     container_name: tempfiles-backend
     build: .
-    restart: always
+    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
@@ -18,13 +18,12 @@ services:
     depends_on:
       - tempfiles-db
     volumes:
-      - ./composeTmp:/app/tmp
-    networks:
-      - tempfiles-network
+      - tempfiles-tmp:/tmp
+
   tempfiles-db:
     container_name: tempfiles-db
     image: postgres:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
@@ -32,9 +31,8 @@ services:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=postgres
     volumes:
-      - ./composeTmp/db:/var/lib/postgresql/data
-    networks:
-      - tempfiles-network
+      - tempfiles-db:/var/lib/postgresql/data
 
-networks:
-  tempfiles-network:
+volumes:
+  tempfiles-db:
+  tempfiles-tmp:

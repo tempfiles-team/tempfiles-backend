@@ -5,6 +5,7 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
 
 	"time"
 
@@ -27,21 +28,27 @@ type FileTracking struct {
 
 var Engine *xorm.Engine
 
-func CreateDBEngine() (*xorm.Engine, error) {
-	connectionInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
-	engine, err := xorm.NewEngine("postgres", connectionInfo)
-	randInit()
+func CreateDBEngine() error {
+	var err error
+	if os.Getenv("DB_TYPE") == "sqlite" {
+		Engine, err = xorm.NewEngine("sqlite", "tmp/data.db")
+	} else {
+		connectionInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+		Engine, err = xorm.NewEngine("postgres", connectionInfo)
+	}
 
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if err := engine.Ping(); err != nil {
-		return nil, err
+	if err := Engine.Ping(); err != nil {
+		return err
 	}
-	if err := engine.Sync(new(FileTracking)); err != nil {
-		return nil, err
+	if err := Engine.Sync(new(FileTracking)); err != nil {
+		return err
 	}
 
-	return engine, nil
+	randInit()
+
+	return nil
 }

@@ -85,8 +85,7 @@ func main() {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 
-	database.Engine, err = database.CreateDBEngine()
-	if err != nil {
+	if database.CreateDBEngine() != nil {
 		log.Fatalf("failed to create db engine: %v", err)
 	}
 
