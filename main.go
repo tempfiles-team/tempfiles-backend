@@ -47,7 +47,7 @@ func main() {
 	terminator := cron.New()
 	terminator.AddFunc("* */1 * * *", func() {
 		var files []database.FileTracking
-		//현제 시간보다 expire_time이 작고 is_deleted가 false인 파일을 가져옴
+		//현재 시간보다 expire_time이 작고 is_deleted가 false인 파일을 가져옴
 		if err := database.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files); err != nil {
 			log.Println("cron db query error", err.Error())
 		}
@@ -60,6 +60,7 @@ func main() {
 			}
 		}
 	})
+
 	// terminator.AddFunc("@daily", func() {
 	terminator.AddFunc("* */5 * * *", func() {
 		var files []database.FileTracking
@@ -77,6 +78,7 @@ func main() {
 			}
 		}
 	})
+
 	terminator.Start()
 
 	var err error
@@ -97,44 +99,44 @@ func main() {
 
 	app.Get("/info", func(c *fiber.Ctx) error {
 		apiName := c.Query("api", "")
+		backendUrl := c.BaseURL()
 		switch apiName {
 		case "upload":
 			return c.JSON(fiber.Map{
 				"apiName": "/upload",
 				"method":  "POST",
 				"desc":    "특정 파일을 서버에 업로드합니다.",
-				"command": "curl -X POST -F 'file=@[filepath or filename]' https://api.tempfiles.ml/upload",
+				"command": "curl -X POST -F 'file=@[filepath or filename]' " + backendUrl + "/upload",
 			})
 		case "list":
 			return c.JSON(fiber.Map{
 				"apiName": "/list",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
-				"command": "curl https://api.tempfiles.ml/list",
+				"command": "curl " + backendUrl + "/list",
 			})
 		case "file":
 			return c.JSON(fiber.Map{
 				"apiName": "/file/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
-				"command": "curl https://api.tempfiles.ml/file/[file_id]",
+				"command": "curl " + backendUrl + "/file/[file_id]",
 			})
 		case "del":
 			return c.JSON(fiber.Map{
 				"apiName": "/del/[file_id]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
-				"command": "curl -X DELETE https://api.tempfiles.ml/del/[file_id]",
+				"command": "curl -X DELETE " + backendUrl + "/del/[file_id]",
 			})
 		case "dl":
 			return c.JSON(fiber.Map{
 				"apiName": "/dl/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
-				"command": "curl -O https://api.tempfiles.ml/dl/[file_id]",
+				"command": "curl -O " + backendUrl + "/dl/[file_id]",
 			})
 		case "":
-			backendUrl := os.Getenv("BACKEND_BASEURL")
 			return c.JSON([]fiber.Map{
 				{
 					"apiUrl":     backendUrl + "/upload",
@@ -239,5 +241,4 @@ func main() {
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
 	terminator.Stop()
-
 }

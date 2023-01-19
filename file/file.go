@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -39,14 +38,16 @@ func FileHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	backendUrl := c.BaseURL()
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":       "file found",
 		"filename":      FileTracking.FileName,
 		"size":          FileTracking.FileSize,
 		"isEncrypted":   FileTracking.IsEncrypted,
 		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":    fmt.Sprintf("%s/del/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
-		"download_url":  fmt.Sprintf("%s/dl/%s", os.Getenv("BACKEND_BASEURL"), FileTracking.FileId),
+		"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileTracking.FileId),
+		"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileTracking.FileId),
 		"provide_token": c.Query("token") != "",
 		"downloadLimit": FileTracking.DownloadLimit,
 		"downloadCount": FileTracking.DownloadCount,

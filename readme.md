@@ -22,7 +22,6 @@ docker pull minpeter/tempfiles-backend
 
 ```bash
 docker run -dp 5000:5000 \
-  -e BACKEND_BASEURL=http://localhost:5000 \
   -e JWT_SECRET=<your secret> \
   -e DB_TYPE=sqlite \
   -v $(pwd)/backend-data:/tmp \
@@ -32,13 +31,13 @@ docker run -dp 5000:5000 \
 ## How to run - local
 
 1. config .env file
+
 ### nessary
 
-|       key       |         value         |   description    |
-| :-------------: | :-------------------: | :--------------: |
-| BACKEND_BASEURL | http://localhost:5000 | backend base url |
-|   JWT_SECRET    |     <your secret>     |    jwt secret    |
-|     DB_TYPE     |  sqlite or postgres   |    select db     |
+|    key     |       value        | description |
+| :--------: | :----------------: | :---------: |
+| JWT_SECRET |   <your secret>    | jwt secret  |
+|  DB_TYPE   | sqlite or postgres |  select db  |
 
 ### optional
 
