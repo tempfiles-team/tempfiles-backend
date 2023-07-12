@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/robfig/cron"
+	"github.com/tempfiles-Team/tempfiles-backend/cnp"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 	"github.com/tempfiles-Team/tempfiles-backend/file"
 	"github.com/tempfiles-Team/tempfiles-backend/jwt"
@@ -169,6 +170,14 @@ func main() {
 
 	app.Get("/list", file.ListHandler)
 	app.Post("/upload", file.UploadHandler)
+
+	// NEW!! CNP upload
+
+	app.Post("/cnpupload", cnp.UploadHandler)
+	app.Get("/cnplist", cnp.ListHandler)
+
+	app.Get("/cnp/:id", cnp.DownloadHandler)
+	app.Delete("/cnp/:id", cnp.DeleteHandler)
 
 	app.Use(func(c *fiber.Ctx) error {
 		if len(strings.Split(c.OriginalURL(), "/")) != 3 {

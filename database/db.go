@@ -26,6 +26,17 @@ type FileTracking struct {
 	IsDeleted     bool      `json:"-"`
 }
 
+type TextTracking struct {
+	Id            int64     `json:"-"`
+	TextId        string    `json:"textId"`
+	TextData      string    `json:"data"`
+	UploadDate    time.Time `json:"uploadDate"`
+	DownloadCount int64     `json:"downloadCount"`
+	DownloadLimit int64     `json:"downloadLimit"`
+	ExpireTime    time.Time `json:"expireTime"`
+	IsDeleted     bool      `json:"-"`
+}
+
 var Engine *xorm.Engine
 
 func CreateDBEngine() error {
@@ -45,6 +56,9 @@ func CreateDBEngine() error {
 		return err
 	}
 	if err := Engine.Sync(new(FileTracking)); err != nil {
+		return err
+	}
+	if err := Engine.Sync(new(TextTracking)); err != nil {
 		return err
 	}
 
