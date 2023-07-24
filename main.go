@@ -16,14 +16,10 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 	"github.com/tempfiles-Team/tempfiles-backend/file"
 	"github.com/tempfiles-Team/tempfiles-backend/jwt"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 
 	jwtware "github.com/gofiber/jwt/v3"
 )
-
-type LoginRequest struct {
-	Email    string
-	Password string
-}
 
 func main() {
 
@@ -33,12 +29,6 @@ func main() {
 	})
 
 	app.Use(
-		// cache.New(cache.Config{
-		// 	StoreResponseHeaders: true,
-		// 	Next: func(c *fiber.Ctx) bool {
-		// 		return c.Route().Path != "/dl/:filename"
-		// 	},
-		// }),
 		cors.New(cors.Config{
 			AllowOrigins: "*",
 			AllowHeaders: "Origin, Content-Type, Accept, X-Download-Limit, X-Time-Limit",
@@ -62,7 +52,6 @@ func main() {
 		}
 	})
 
-	// terminator.AddFunc("@daily", func() {
 	terminator.AddFunc("* */5 * * *", func() {
 		var files []database.FileTracking
 		// IsDeleted가 false인 파일만 가져옴
@@ -93,9 +82,7 @@ func main() {
 	}
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "api is working normally :)",
-		})
+		return c.JSON(response.NewSuccessMessageResponse("api is working normally :)"))
 	})
 
 	app.Get("/info", func(c *fiber.Ctx) error {
@@ -103,42 +90,42 @@ func main() {
 		backendUrl := c.BaseURL()
 		switch apiName {
 		case "upload":
-			return c.JSON(fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse(fiber.Map{
 				"apiName": "/upload",
 				"method":  "POST",
 				"desc":    "특정 파일을 서버에 업로드합니다.",
 				"command": "curl -X POST -F 'file=@[filepath or filename]' " + backendUrl + "/upload",
-			})
+			}))
 		case "list":
-			return c.JSON(fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse(fiber.Map{
 				"apiName": "/list",
 				"method":  "GET",
-				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
+				"desc":    "서버에 존재하는 모든 파일에 대한 세부 정보를 반환합니다.",
 				"command": "curl " + backendUrl + "/list",
-			})
+			}))
 		case "file":
-			return c.JSON(fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse(fiber.Map{
 				"apiName": "/file/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
 				"command": "curl " + backendUrl + "/file/[file_id]",
-			})
+			}))
 		case "del":
-			return c.JSON(fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse(fiber.Map{
 				"apiName": "/del/[file_id]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
 				"command": "curl -X DELETE " + backendUrl + "/del/[file_id]",
-			})
+			}))
 		case "dl":
-			return c.JSON(fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse(fiber.Map{
 				"apiName": "/dl/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
 				"command": "curl -O " + backendUrl + "/dl/[file_id]",
-			})
+			}))
 		case "":
-			return c.JSON([]fiber.Map{
+			return c.JSON(response.NewSuccessDataResponse([]fiber.Map{
 				{
 					"apiUrl":     backendUrl + "/upload",
 					"apiHandler": "upload",
@@ -159,11 +146,9 @@ func main() {
 					"apiUrl":     backendUrl + "/dl/[file_id]",
 					"apiHandler": "dl",
 				},
-			})
+			}))
 		default:
-			return c.JSON(fiber.Map{
-				"message": "invalid api name",
-			})
+			return c.JSON(response.NewFailMessageResponse("invalid api name"))
 
 		}
 	})
@@ -181,10 +166,7 @@ func main() {
 
 	app.Use(func(c *fiber.Ctx) error {
 		if len(strings.Split(c.OriginalURL(), "/")) != 3 {
-			// 핸들러가 알아서 에러를 반환함
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "invalid url",
-			})
+			return c.Status(fiber.StatusBadRequest).JSON(response.NewFailMessageResponse("invalid url"))
 		}
 
 		id := strings.Split(c.OriginalURL(), "/")[2]
@@ -197,14 +179,10 @@ func main() {
 		file := database.FileTracking{FileId: id}
 		database.Engine.Get(&file)
 		if file.FileName == "" {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "file not exist",
-			})
+			return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("file not exist"))
 		}
 		if file.IsDeleted {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "file is deleted",
-			})
+			return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("file is deleted"))
 		}
 		return c.Next()
 	})
@@ -215,10 +193,7 @@ func main() {
 	app.Use(jwtware.New(jwtware.Config{
 		TokenLookup: "query:token",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "file is password protected / Unauthorized",
-				"error":   err.Error(),
-			})
+			return c.Status(fiber.StatusUnauthorized).JSON(response.NewFailMessageResponse("invalid token, file is password protected / Unauthorized"))
 		},
 
 		Filter: func(c *fiber.Ctx) bool {

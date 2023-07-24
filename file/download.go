@@ -7,17 +7,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 )
 
 func DownloadHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message":  "Please provide a file id",
-			"error":    nil,
-			"download": false,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(response.NewFailMessageResponse("Please provide a file id"))
 	}
 
 	FileTracking := database.FileTracking{
@@ -27,26 +24,17 @@ func DownloadHandler(c *fiber.Ctx) error {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db query error",
-			"error":   err.Error(),
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db query error"))
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "file not found",
-			"error":   nil,
-		})
+		return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("file not found"))
 	}
 
 	// db DownloadCount +1
 	FileTracking.DownloadCount++
 	if _, err := database.Engine.ID(FileTracking.Id).Update(&FileTracking); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db update error",
-			"error":   err.Error(),
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db update error"))
 	}
 
 	// Download Limit check
@@ -56,10 +44,7 @@ func DownloadHandler(c *fiber.Ctx) error {
 
 		log.Printf("check IsDeleted file: %s/%s \n", FileTracking.FileId, FileTracking.FileName)
 		if _, err := database.Engine.ID(FileTracking.Id).Cols("Is_deleted").Update(&FileTracking); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "db update error",
-				"error":   err.Error(),
-			})
+			return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db update error"))
 		}
 	}
 

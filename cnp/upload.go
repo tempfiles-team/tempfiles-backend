@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 )
 
 func UploadHandler(c *fiber.Ctx) error {
@@ -14,10 +15,7 @@ func UploadHandler(c *fiber.Ctx) error {
 	pasteText := string(c.Body())
 
 	if pasteText == "" {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Please paste something",
-			"error":   "no plaste text",
-		})
+		return c.Status(fiber.StatusOK).JSON(response.NewFailMessageResponse("Please provide a text"))
 	}
 
 	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
@@ -42,20 +40,19 @@ func UploadHandler(c *fiber.Ctx) error {
 
 	_, err = database.Engine.Insert(TextTracking)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewSuccessDataResponse(fiber.Map{
 			"message": "database insert error",
 			"error":   err.Error(),
-		})
+		}))
 	}
 
 	log.Printf("Successfully uploaded %s, download limit %d\n", TextTracking.TextId, TextTracking.DownloadLimit)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "Paste text uploaded successfully",
+	return c.Status(fiber.StatusOK).JSON(response.NewSuccessDataResponse(fiber.Map{
 		"textId":        TextTracking.TextId,
 		"uploadDate":    TextTracking.UploadDate.Format(time.RFC3339),
 		"downloadLimit": TextTracking.DownloadLimit,
 		"downloadCount": TextTracking.DownloadCount,
 		"expireTime":    TextTracking.ExpireTime.Format(time.RFC3339),
-	})
+	}))
 }

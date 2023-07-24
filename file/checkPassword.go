@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 	"github.com/tempfiles-Team/tempfiles-backend/jwt"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,11 +14,7 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 	pw := c.Query("pw", "")
 
 	if id == "" || pw == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a file id and password",
-			"error":   nil,
-			"unlock":  false,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(response.NewFailMessageResponse("Please provide a file id and password"))
 	}
 
 	FileTracking := database.FileTracking{
@@ -27,41 +24,23 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db query error",
-			"error":   err.Error(),
-			"unlock":  false,
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db query error"))
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "file not found",
-			"error":   nil,
-			"unlock":  false,
-		})
+		return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("file not found"))
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(FileTracking.Password), []byte(pw)); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "password incorrect",
-			"error":   err.Error(),
-			"unlock":  false,
-		})
+		return c.Status(fiber.StatusUnauthorized).JSON(response.NewFailMessageResponse("password incorrect"))
 	}
 
 	token, _, err := jwt.CreateJWTToken(FileTracking)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "jwt token creation error",
-			"error":   err.Error(),
-			"unlock":  false,
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("jwt create error"))
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "password correct",
-		"token":   token,
-		"unlock":  true,
-	})
+	return c.JSON(response.NewSuccessDataResponse(fiber.Map{
+		"token": token,
+	}))
 }

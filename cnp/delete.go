@@ -3,17 +3,14 @@ package cnp
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 )
 
 func DeleteHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a text id",
-			"error":   nil,
-			"delete":  false,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(response.NewFailMessageResponse("Please provide a text id"))
 	}
 
 	TextTracking := database.TextTracking{
@@ -23,31 +20,17 @@ func DeleteHandler(c *fiber.Ctx) error {
 	has, err := database.Engine.Get(&TextTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db query error",
-			"error":   err.Error(),
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db query error"))
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "text not found",
-			"error":   nil,
-		})
+		return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("text not found"))
 	}
 
 	if _, err := database.Engine.Delete(&TextTracking); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db delete error",
-			"error":   err.Error(),
-			"delete":  false,
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db delete error"))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "text deleted successfully",
-		"error":   nil,
-		"delete":  true,
-	})
+	return c.Status(fiber.StatusOK).JSON(response.NewSuccessMessageResponse("Text deleted successfully"))
 
 }

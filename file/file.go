@@ -6,16 +6,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/response"
 )
 
 func FileHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please provide a file id",
-			"error":   nil,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(response.NewFailMessageResponse("Please provide a file id"))
 	}
 
 	FileTracking := database.FileTracking{
@@ -25,23 +23,16 @@ func FileHandler(c *fiber.Ctx) error {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "db query error",
-			"error":   err.Error(),
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(response.NewFailMessageResponse("db query error"))
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "file not found",
-			"error":   nil,
-		})
+		return c.Status(fiber.StatusNotFound).JSON(response.NewFailMessageResponse("file not found"))
 	}
 
 	backendUrl := c.BaseURL()
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "file found",
+	return c.Status(fiber.StatusOK).JSON(response.NewSuccessDataResponse(fiber.Map{
 		"filename":      FileTracking.FileName,
 		"size":          FileTracking.FileSize,
 		"isEncrypted":   FileTracking.IsEncrypted,
@@ -52,5 +43,5 @@ func FileHandler(c *fiber.Ctx) error {
 		"downloadLimit": FileTracking.DownloadLimit,
 		"downloadCount": FileTracking.DownloadCount,
 		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-	})
+	}))
 }
