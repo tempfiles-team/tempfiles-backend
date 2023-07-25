@@ -21,7 +21,7 @@ docker pull minpeter/tempfiles-backend
 ### 2. run docker container
 
 ```bash
-docker run -dp 5000:5000 \
+docker run -dp 5050:5050 \
   -e JWT_SECRET=<your secret> \
   -e DB_TYPE=sqlite \
   -v $(pwd)/backend-data:/tmp \
@@ -43,7 +43,7 @@ docker run -dp 5000:5000 \
 
 |     key      |   value   |                  description                   |
 | :----------: | :-------: | :--------------------------------------------: |
-| BACKEND_PORT |   5000    |     If you want to change the backend port     |
+| BACKEND_PORT |   5050    |     If you want to change the backend port     |
 |   DB_HOST    | localhost | If postgres is selected, its db ip or hostname |
 |   DB_PORT    |   5432    |      If postgres is selected, its db port      |
 |   DB_NAME    |  tempdb   |   If postgres is selected, its db table name   |

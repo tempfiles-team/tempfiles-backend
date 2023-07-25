@@ -1,4 +1,4 @@
-package response
+package utils
 
 type Response struct {
 	// "요청이 정상적으로 처리되었습니다" | "서버에서 일시적인 오류가 발생했어요"
