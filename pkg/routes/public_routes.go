@@ -14,7 +14,7 @@ import (
 func PublicRoutes(r fiber.Router) {
 	// Create routes group.
 
-	r.Get("/", controllers.GetIndex)
+	r.Get("/", controllers.HealthCheck)
 	r.Get("/info", controllers.GetInfo)
 
 	r.Get("/files", controllers.ListFile)

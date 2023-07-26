@@ -37,6 +37,6 @@ func PrivateRouter(r fiber.Router) {
 	}))
 
 	r.Get("/dl/:id", controllers.DownloadFile)
-	r.Delete("/del/:id", controllers.DeleteFile)
+	r.Delete("/file/:id", controllers.DeleteFile)
 
 }

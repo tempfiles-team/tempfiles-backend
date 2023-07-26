@@ -10,6 +10,15 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 )
 
+// DeleteText godoc
+// @Summary Delete text item.
+// @Description Delete text item.
+// @Tags text
+// @Accept */*
+// @Produce json
+// @Param id path string true "text id"
+// @Success 200 {object} utils.Response
+// @Router /text/{id} [delete]
 func DeleteText(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -39,6 +48,14 @@ func DeleteText(c *fiber.Ctx) error {
 
 }
 
+// ListText godoc
+// @Summary List text items.
+// @Description List text items.
+// @Tags text
+// @Accept */*
+// @Produce json
+// @Success 200 {object} utils.Response({data:[]interface{}})
+// @Router /texts [get]
 func ListText(c *fiber.Ctx) error {
 
 	var texts []database.TextTracking
@@ -50,6 +67,16 @@ func ListText(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(texts))
 }
 
+// DownloadText godoc
+// @Summary Download text item.
+// @Description Download text item.
+// @Tags text
+// @Accept */*
+// @Produce json
+// @Param id path string true "text id"
+// @Param token query string false "token"
+// @Success 200 {object} utils.Response
+// @Router /text/{id} [get]
 func DownloadText(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -98,6 +125,16 @@ func DownloadText(c *fiber.Ctx) error {
 	}))
 }
 
+// UploadText godoc
+// @Summary Upload text item.
+// @Description Upload text item.
+// @Tags text
+// @Accept */*
+// @Produce json
+// @Param X-Download-Limit header string false "download limit"
+// @Param X-Time-Limit header string false "time limit"
+// @Success 200 {object} utils.Response
+// @Router /text/new [post]
 func UploadText(c *fiber.Ctx) error {
 
 	pasteText := string(c.Body())

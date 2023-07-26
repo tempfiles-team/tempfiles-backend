@@ -15,8 +15,19 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 
 	_ "github.com/joho/godotenv/autoload"
+	_ "github.com/tempfiles-Team/tempfiles-backend/docs"
 )
 
+// @title Tempfiles API
+// @version 2.0
+// @description This is a Tempfiles server for file and text sharing.
+// @termsOfService https://tmpf.me/terms/
+
+// @contact.name API Support
+// @contact.url https://tmpf.me/credit
+// @contact.email dev@tmpf.me
+
+// @BasePath /
 func main() {
 
 	config := configs.FiberConfig()
@@ -72,6 +83,8 @@ func main() {
 	}
 
 	root := app.Group("/")
+
+	routes.SwaggerRoute(app)
 
 	routes.PublicRoutes(root)
 	routes.PrivateRouter(root)
