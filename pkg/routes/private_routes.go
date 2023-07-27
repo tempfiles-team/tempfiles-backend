@@ -36,7 +36,26 @@ func PrivateRouter(r fiber.Router) {
 		KeyFunc: utils.IsMatched(),
 	}))
 
+	// DownloadFile godoc
+	// @Summary Download file item.
+	// @Description Download file item.
+	// @Tags file
+	// @Accept */*
+	// @Produce json
+	// @Param id path string true "file id"
+	// @Param token query string false "token"
+	// @Success 200 {object} utils.Response
+	// @Router /dl/{id} [get]
 	r.Get("/dl/:id", controllers.DownloadFile)
+	// DeleteFile godoc
+	// @Summary Delete file item.
+	// @Description Delete file item.
+	// @Tags file
+	// @Accept */*
+	// @Produce json
+	// @Param id path string true "file id"
+	// @Success 200 {object} utils.Response
+	// @Router /file/{id} [delete]
 	r.Delete("/file/:id", controllers.DeleteFile)
 
 }

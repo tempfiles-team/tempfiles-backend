@@ -5,14 +5,6 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 )
 
-// HealthCheck godoc
-// @Summary Show the status of server.
-// @Description get the status of server.
-// @Tags root
-// @Accept */*
-// @Produce json
-// @Success 200 {object} utils.Response
-// @Router / [get]
 func HealthCheck(c *fiber.Ctx) error {
 	res := utils.NewSuccessMessageResponse("Server is up and running")
 
@@ -23,15 +15,6 @@ func HealthCheck(c *fiber.Ctx) error {
 	return nil
 }
 
-// GetInfo godoc
-// @Summary Show the information of server.
-// @Description get the information of server.
-// @Tags root
-// @Accept */*
-// @Produce json
-// @Param api query string false "api name"
-// @Success 200 {object} utils.Response
-// @Router /info [get]
 func GetInfo(c *fiber.Ctx) error {
 	apiName := c.Query("api", "")
 	backendUrl := c.BaseURL()
