@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/app/models"
+	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 )
 
@@ -26,11 +27,8 @@ func DeleteText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a text id"))
 	}
 
-	TextTracking := database.TextTracking{
-		TextId: id,
-	}
-
-	has, err := database.Engine.Get(&TextTracking)
+	TextS := queries.TextState{}
+	has, err := TextS.GetText(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -40,7 +38,7 @@ func DeleteText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("text not found"))
 	}
 
-	if _, err := database.Engine.Delete(&TextTracking); err != nil {
+	if err := TextS.DelText(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db delete error"))
 	}
 
@@ -54,13 +52,13 @@ func DeleteText(c *fiber.Ctx) error {
 // @Tags text
 // @Accept */*
 // @Produce json
-// @Success 200 {object} utils.Response({data:[]interface{}})
+// @Success 200 {object} utils.Response{data=models.TextTracking}
 // @Router /texts [get]
 func ListText(c *fiber.Ctx) error {
 
-	var texts []database.TextTracking
-	// IsDeleted가 false인 파일만 가져옴
-	if err := database.Engine.Where("is_deleted = ?", false).Find(&texts); err != nil {
+	TextS := queries.TextState{}
+	texts, err := TextS.GetTexts()
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("text list error"))
 	}
 
@@ -84,11 +82,8 @@ func DownloadText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a text id"))
 	}
 
-	TextTracking := database.TextTracking{
-		TextId: id,
-	}
-
-	has, err := database.Engine.Get(&TextTracking)
+	TextS := queries.TextState{}
+	has, err := TextS.GetText(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -97,31 +92,26 @@ func DownloadText(c *fiber.Ctx) error {
 	if !has {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("text not found"))
 	}
-
-	// db DownloadCount +1
-	TextTracking.DownloadCount++
-	if _, err := database.Engine.ID(TextTracking.Id).Update(&TextTracking); err != nil {
+	if err := TextS.IncreaseDLCount(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
 	}
 
-	// Download Limit check
-	if TextTracking.DownloadLimit != 0 && TextTracking.DownloadCount >= TextTracking.DownloadLimit {
-		// Download Limit exceeded -> check IsDelete
-		TextTracking.IsDeleted = true
+	isExp, err := TextS.IsExpiredText()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
+	}
 
-		log.Printf("check IsDeleted file: %s\n", TextTracking.TextId)
-		if _, err := database.Engine.ID(TextTracking.Id).Cols("Is_deleted").Update(&TextTracking); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
-		}
+	if isExp {
+		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("text is expired"))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"textId":        TextTracking.TextId,
-		"textData":      TextTracking.TextData,
-		"uploadDate":    TextTracking.UploadDate.Format(time.RFC3339),
-		"downloadLimit": TextTracking.DownloadLimit,
-		"downloadCount": TextTracking.DownloadCount,
-		"expireTime":    TextTracking.ExpireTime.Format(time.RFC3339),
+		"textId":        TextS.Model.TextId,
+		"textData":      TextS.Model.TextData,
+		"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
+		"downloadLimit": TextS.Model.DownloadLimit,
+		"downloadCount": TextS.Model.DownloadCount,
+		"expireTime":    TextS.Model.ExpireTime.Format(time.RFC3339),
 	}))
 }
 
@@ -155,29 +145,26 @@ func UploadText(c *fiber.Ctx) error {
 	} else {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
-	TextTracking := &database.TextTracking{
-		TextId:        database.RandString(),
+
+	TextS := queries.TextState{}
+	TextS.Model = models.TextTracking{
+		TextId:        utils.RandString(),
 		TextData:      pasteText,
 		UploadDate:    time.Now(),
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate,
 	}
 
-	_, err = database.Engine.Insert(TextTracking)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewSuccessDataResponse(fiber.Map{
-			"message": "database insert error",
-			"error":   err.Error(),
-		}))
+	if err := TextS.InsertFile(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewSuccessMessageResponse("database insert error"))
 	}
-
-	log.Printf("Successfully uploaded %s, download limit %d\n", TextTracking.TextId, TextTracking.DownloadLimit)
+	log.Printf("Successfully uploaded %s, download limit %d\n", TextS.Model.TextId, TextS.Model.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"textId":        TextTracking.TextId,
-		"uploadDate":    TextTracking.UploadDate.Format(time.RFC3339),
-		"downloadLimit": TextTracking.DownloadLimit,
-		"downloadCount": TextTracking.DownloadCount,
-		"expireTime":    TextTracking.ExpireTime.Format(time.RFC3339),
+		"textId":        TextS.Model.TextId,
+		"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
+		"downloadLimit": TextS.Model.DownloadLimit,
+		"downloadCount": TextS.Model.DownloadCount,
+		"expireTime":    TextS.Model.ExpireTime.Format(time.RFC3339),
 	}))
 }

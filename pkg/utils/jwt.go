@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/app/models"
+	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 )
 
-func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
+func CreateJWTToken(FileTracking models.FileTracking) (string, int64, error) {
 	exp := time.Now().Add(time.Minute * 10).Unix()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -23,11 +24,8 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 }
 
 func IsEncrypted(id string) bool {
-	FileTracking := database.FileTracking{
-		FileId: id,
-	}
-
-	has, err := database.Engine.Get(&FileTracking)
+	FileS := queries.FileState{}
+	has, err := FileS.GetFile(id)
 	if err != nil {
 		return false
 	}
@@ -35,7 +33,8 @@ func IsEncrypted(id string) bool {
 		return false
 	}
 
-	return !FileTracking.IsEncrypted
+	// return !FileTracking.IsEncrypted
+	return FileS.Model.IsEncrypted
 }
 
 var FileId string

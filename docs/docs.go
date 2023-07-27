@@ -264,7 +264,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/database.FileTracking"
+                                            "$ref": "#/definitions/models.FileTracking"
                                         }
                                     }
                                 }
@@ -427,7 +427,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.TextTracking"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -435,7 +447,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "database.FileTracking": {
+        "models.FileTracking": {
             "type": "object",
             "properties": {
                 "downloadCount": {
@@ -458,6 +470,29 @@ const docTemplate = `{
                 },
                 "size": {
                     "type": "integer"
+                },
+                "uploadDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TextTracking": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "downloadCount": {
+                    "type": "integer"
+                },
+                "downloadLimit": {
+                    "type": "integer"
+                },
+                "expireTime": {
+                    "type": "string"
+                },
+                "textId": {
+                    "type": "string"
                 },
                 "uploadDate": {
                     "type": "string"

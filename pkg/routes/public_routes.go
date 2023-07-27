@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/app/controllers"
-	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 )
 
@@ -18,7 +18,7 @@ func PublicRoutes(r fiber.Router) {
 	r.Get("/info", controllers.GetInfo)
 
 	r.Get("/files", controllers.ListFile)
-	r.Post("/file/new", controllers.UploadFile)
+	r.Post("/upload", controllers.UploadFile)
 
 	r.Post("/text/new", controllers.UploadText)
 	r.Get("/texts", controllers.ListText)
@@ -27,7 +27,7 @@ func PublicRoutes(r fiber.Router) {
 
 	r.Use(func(c *fiber.Ctx) error {
 		if len(strings.Split(c.OriginalURL(), "/")) != 3 {
-			return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("invalid url"))
+			return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("sorry, endpoint is not found"))
 		}
 
 		id := strings.Split(c.OriginalURL(), "/")[2]
@@ -37,12 +37,16 @@ func PublicRoutes(r fiber.Router) {
 
 		log.Printf("id: %v", id)
 
-		file := database.FileTracking{FileId: id}
-		database.Engine.Get(&file)
-		if file.FileName == "" {
+		FileS := queries.FileState{}
+		has, err := FileS.GetFile(id)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailDataResponse(nil))
+		}
+		if !has {
 			return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not exist"))
 		}
-		if file.IsDeleted {
+		if FileS.Model.IsDeleted {
 			return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file is deleted"))
 		}
 		return c.Next()

@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tempfiles-Team/tempfiles-backend/database"
+	"github.com/tempfiles-Team/tempfiles-backend/app/models"
+	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -34,11 +35,8 @@ func CheckPasswordFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id and password"))
 	}
 
-	FileTracking := database.FileTracking{
-		FileId: id,
-	}
-
-	has, err := database.Engine.Get(&FileTracking)
+	FileS := queries.FileState{}
+	has, err := FileS.GetFile(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -48,11 +46,11 @@ func CheckPasswordFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not found"))
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(FileTracking.Password), []byte(pw)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(FileS.Model.Password), []byte(pw)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.NewFailMessageResponse("password incorrect"))
 	}
 
-	token, _, err := utils.CreateJWTToken(FileTracking)
+	token, _, err := utils.CreateJWTToken(FileS.Model)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("jwt create error"))
 	}
@@ -78,11 +76,8 @@ func DeleteFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileTracking := database.FileTracking{
-		FileId: id,
-	}
-
-	has, err := database.Engine.Get(&FileTracking)
+	FileS := queries.FileState{}
+	has, err := FileS.GetFile(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -92,17 +87,15 @@ func DeleteFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not found"))
 	}
 
-	if err := os.RemoveAll("tmp/" + FileTracking.FileId); err != nil {
+	if err := os.RemoveAll("tmp/" + FileS.Model.FileId); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("file delete error"))
 	}
 
-	//db에서 삭제
-	if _, err := database.Engine.Delete(&FileTracking); err != nil {
+	if err := FileS.DelFile(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db delete error"))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessMessageResponse("File deleted successfully"))
-
 }
 
 // DownloadFile godoc
@@ -122,11 +115,8 @@ func DownloadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileTracking := database.FileTracking{
-		FileId: id,
-	}
-
-	has, err := database.Engine.Get(&FileTracking)
+	FileS := queries.FileState{}
+	has, err := FileS.GetFile(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -136,25 +126,21 @@ func DownloadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not found"))
 	}
 
-	// db DownloadCount +1
-	FileTracking.DownloadCount++
-	if _, err := database.Engine.ID(FileTracking.Id).Update(&FileTracking); err != nil {
+	if err := FileS.IncreaseDLCount(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
 	}
 
-	// Download Limit check
-	if FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit {
-		// Download Limit exceeded -> check IsDelete
-		FileTracking.IsDeleted = true
-
-		log.Printf("check IsDeleted file: %s/%s \n", FileTracking.FileId, FileTracking.FileName)
-		if _, err := database.Engine.ID(FileTracking.Id).Cols("Is_deleted").Update(&FileTracking); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
-		}
+	isExp, err := FileS.IsExpiredFile()
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailDataResponse(nil))
 	}
 
-	c.Response().Header.Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(FileTracking.FileName), "+", "%20"))
-	return c.SendFile("tmp/" + FileTracking.FileId + "/" + FileTracking.FileName)
+	if isExp {
+		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file is expired"))
+	}
+
+	c.Response().Header.Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(FileS.Model.FileName), "+", "%20"))
+	return c.SendFile("tmp/" + FileS.Model.FileId + "/" + FileS.Model.FileName)
 }
 
 // GetFile godoc
@@ -174,11 +160,8 @@ func GetFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileTracking := database.FileTracking{
-		FileId: id,
-	}
-
-	has, err := database.Engine.Get(&FileTracking)
+	FileS := queries.FileState{}
+	has, err := FileS.GetFile(id)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
@@ -191,16 +174,16 @@ func GetFile(c *fiber.Ctx) error {
 	backendUrl := c.BaseURL()
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
-		"isEncrypted":   FileTracking.IsEncrypted,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileTracking.FileId),
-		"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileTracking.FileId),
+		"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileS.Model.FileId),
+		"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileS.Model.FileId),
+		"filename":      FileS.Model.FileName,
+		"size":          FileS.Model.FileSize,
+		"uploadDate":    FileS.Model.UploadDate.Format(time.RFC3339),
+		"isEncrypted":   FileS.Model.IsEncrypted,
 		"provide_token": c.Query("token") != "",
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
+		"downloadLimit": FileS.Model.DownloadLimit,
+		"downloadCount": FileS.Model.DownloadCount,
+		"expireTime":    FileS.Model.ExpireTime.Format(time.RFC3339),
 	}))
 }
 
@@ -210,14 +193,14 @@ func GetFile(c *fiber.Ctx) error {
 // @Tags file
 // @Accept */*
 // @Produce json
-// @Success 200 {object} utils.Response{data=database.FileTracking}
+// @Success 200 {object} utils.Response{data=models.FileTracking}
 // @Router /files [get]
 func ListFile(c *fiber.Ctx) error {
 
-	var files []database.FileTracking
-	// IsDeleted가 false인 파일만 가져옴
-	if err := database.Engine.Where("is_deleted = ?", false).Find(&files); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("file list error"))
+	FileS := queries.FileState{}
+	files, err := FileS.GetFiles()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailDataResponse(nil))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(files))
@@ -256,53 +239,58 @@ func UploadFile(c *fiber.Ctx) error {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
 
-	FileTracking := &database.FileTracking{
+	FileS := queries.FileState{}
+
+	FileS.Model = models.FileTracking{
 		FileName:      data.Filename,
 		FileSize:      data.Size,
 		UploadDate:    time.Now(),
-		FileId:        database.RandString(),
+		FileId:        utils.RandString(),
 		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate,
 	}
 
 	var token string = ""
-	if FileTracking.IsEncrypted {
+	if FileS.Model.IsEncrypted {
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("bcrypt hash error"))
 		}
-		FileTracking.Password = string(hash)
-		token, _, err = utils.CreateJWTToken(*FileTracking)
+		FileS.Model.Password = string(hash)
+		token, _, err = utils.CreateJWTToken(FileS.Model)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("jwt create error"))
 		}
 	}
 
-	if utils.CheckFileFolder(FileTracking.FileId) != nil {
+	if utils.CheckFileFolder(FileS.Model.FileId) != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("file folder create error"))
 	}
 
-	if err := c.SaveFile(data, fmt.Sprintf("tmp/%s/%s", FileTracking.FileId, FileTracking.FileName)); err != nil {
+	if err := c.SaveFile(data, fmt.Sprintf("tmp/%s/%s", FileS.Model.FileId, FileS.Model.FileName)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("file save error"))
 	}
 
-	_, err = database.Engine.Insert(FileTracking)
-	if err != nil {
+	// _, err = queries.Engine.Insert(FileS.Model)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("database insert error"))
+	// }
+
+	if err := FileS.InsertFile(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("database insert error"))
 	}
-
-	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileTracking.FileName, FileTracking.FileSize, FileTracking.DownloadLimit)
+	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileS.Model.FileName, FileS.Model.FileSize, FileS.Model.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"fileId":        FileTracking.FileId,
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
-		"isEncrypted":   FileTracking.IsEncrypted,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
+		"fileId":        FileS.Model.FileId,
+		"filename":      FileS.Model.FileName,
+		"size":          FileS.Model.FileSize,
+		"isEncrypted":   FileS.Model.IsEncrypted,
+		"uploadDate":    FileS.Model.UploadDate.Format(time.RFC3339),
 		"token":         token,
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
+		"downloadLimit": FileS.Model.DownloadLimit,
+		"downloadCount": FileS.Model.DownloadCount,
+		"expireTime":    FileS.Model.ExpireTime.Format(time.RFC3339),
 	}))
 }
