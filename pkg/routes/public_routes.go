@@ -15,7 +15,6 @@ func PublicRoutes(r fiber.Router) {
 	// Create routes group.
 
 	r.Get("/", controllers.HealthCheck)
-	r.Get("/info", controllers.GetInfo)
 
 	r.Get("/files", controllers.ListFile)
 	r.Post("/upload", controllers.UploadFile)
