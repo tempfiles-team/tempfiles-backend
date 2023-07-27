@@ -1,4 +1,49 @@
 basePath: /
+definitions:
+  models.FileTracking:
+    properties:
+      downloadCount:
+        type: integer
+      downloadLimit:
+        type: integer
+      expireTime:
+        type: string
+      fileId:
+        type: string
+      filename:
+        type: string
+      isEncrypted:
+        type: boolean
+      size:
+        type: integer
+      uploadDate:
+        type: string
+    type: object
+  models.TextTracking:
+    properties:
+      data:
+        type: string
+      downloadCount:
+        type: integer
+      downloadLimit:
+        type: integer
+      expireTime:
+        type: string
+      textId:
+        type: string
+      uploadDate:
+        type: string
+    type: object
+  utils.Response:
+    properties:
+      data: {}
+      message:
+        description: '"요청이 정상적으로 처리되었습니다" | "서버에서 일시적인 오류가 발생했어요"'
+        type: string
+      status:
+        description: SUCCESS | FAIL
+        type: string
+    type: object
 info:
   contact:
     email: dev@tmpf.me
@@ -8,5 +53,278 @@ info:
   termsOfService: https://tmpf.me/terms/
   title: Tempfiles API
   version: "2.0"
-paths: {}
+paths:
+  /:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Show the status of server.
+      tags:
+      - root
+  /checkpw/{id}:
+    get:
+      consumes:
+      - '*/*'
+      description: Check password of file item.
+      parameters:
+      - description: file id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: password
+        in: query
+        name: pw
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Check password of file item.
+      tags:
+      - file
+  /dl/{id}:
+    get:
+      consumes:
+      - '*/*'
+      description: Download file item.
+      parameters:
+      - description: file id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Download file item.
+      tags:
+      - file
+  /file/{id}:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete file item.
+      parameters:
+      - description: file id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Delete file item.
+      tags:
+      - file
+    get:
+      consumes:
+      - '*/*'
+      description: Get file item.
+      parameters:
+      - description: file id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Get file item.
+      tags:
+      - file
+  /files:
+    get:
+      consumes:
+      - '*/*'
+      description: List file items.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.FileTracking'
+              type: object
+      summary: List file items.
+      tags:
+      - file
+  /info:
+    get:
+      consumes:
+      - '*/*'
+      description: get the information of server.
+      parameters:
+      - description: api name
+        in: query
+        name: api
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Show the information of server.
+      tags:
+      - root
+  /text/{id}:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete text item.
+      parameters:
+      - description: text id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Delete text item.
+      tags:
+      - text
+    get:
+      consumes:
+      - '*/*'
+      description: Download text item.
+      parameters:
+      - description: text id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Download text item.
+      tags:
+      - text
+  /text/new:
+    post:
+      consumes:
+      - '*/*'
+      description: Upload text item.
+      parameters:
+      - description: download limit
+        in: header
+        name: X-Download-Limit
+        type: string
+      - description: time limit
+        in: header
+        name: X-Time-Limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Upload text item.
+      tags:
+      - text
+  /texts:
+    get:
+      consumes:
+      - '*/*'
+      description: List text items.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.TextTracking'
+              type: object
+      summary: List text items.
+      tags:
+      - text
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file item.
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: password
+        in: query
+        name: pw
+        type: string
+      - description: download limit
+        in: header
+        name: X-Download-Limit
+        type: string
+      - description: time limit
+        in: header
+        name: X-Time-Limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Upload file item.
+      tags:
+      - file
 swagger: "2.0"

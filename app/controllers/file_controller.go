@@ -16,6 +16,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// CheckPasswordFile godoc
+// @Summary Check password of file item.
+// @Description Check password of file item.
+// @Tags file
+// @Accept */*
+// @Produce json
+// @Param id path string true "file id"
+// @Param pw query string true "password"
+// @Success 200 {object} utils.Response
+// @Router /checkpw/{id} [get]
 func CheckPasswordFile(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -50,6 +60,15 @@ func CheckPasswordFile(c *fiber.Ctx) error {
 	}))
 }
 
+// DeleteFile godoc
+// @Summary Delete file item.
+// @Description Delete file item.
+// @Tags file
+// @Accept */*
+// @Produce json
+// @Param id path string true "file id"
+// @Success 200 {object} utils.Response
+// @Router /file/{id} [delete]
 func DeleteFile(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -79,6 +98,16 @@ func DeleteFile(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessMessageResponse("File deleted successfully"))
 }
 
+// DownloadFile godoc
+// @Summary Download file item.
+// @Description Download file item.
+// @Tags file
+// @Accept */*
+// @Produce json
+// @Param id path string true "file id"
+// @Param token query string false "token"
+// @Success 200 {object} utils.Response
+// @Router /dl/{id} [get]
 func DownloadFile(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -114,6 +143,16 @@ func DownloadFile(c *fiber.Ctx) error {
 	return c.SendFile("tmp/" + FileS.Model.FileId + "/" + FileS.Model.FileName)
 }
 
+// GetFile godoc
+// @Summary Get file item.
+// @Description Get file item.
+// @Tags file
+// @Accept */*
+// @Produce json
+// @Param id path string true "file id"
+// @Param token query string false "token"
+// @Success 200 {object} utils.Response
+// @Router /file/{id} [get]
 func GetFile(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -148,6 +187,14 @@ func GetFile(c *fiber.Ctx) error {
 	}))
 }
 
+// ListFile godoc
+// @Summary List file items.
+// @Description List file items.
+// @Tags file
+// @Accept */*
+// @Produce json
+// @Success 200 {object} utils.Response{data=models.FileTracking}
+// @Router /files [get]
 func ListFile(c *fiber.Ctx) error {
 
 	FileS := queries.FileState{}
@@ -159,6 +206,18 @@ func ListFile(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(files))
 }
 
+// UploadFile godoc
+// @Summary Upload file item.
+// @Description Upload file item.
+// @Tags file
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "file"
+// @Param pw query string false "password"
+// @Param X-Download-Limit header string false "download limit"
+// @Param X-Time-Limit header string false "time limit"
+// @Success 200 {object} utils.Response
+// @Router /upload [post]
 func UploadFile(c *fiber.Ctx) error {
 	data, err := c.FormFile("file")
 	if err != nil {
