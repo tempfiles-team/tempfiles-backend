@@ -2,6 +2,7 @@ package queries
 
 import (
 	"errors"
+	"log"
 
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
 	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
@@ -30,7 +31,7 @@ func (s *TextState) IncreaseDLCount() error {
 		return errors.New("textId is empty, GetText first")
 	}
 	s.Model.DownloadCount++
-	_, err := db.Engine.ID(s.Model.TextId).Update(&s.Model)
+	_, err := db.Engine.ID(s.Model.Id).Update(&s.Model)
 	return err
 }
 
@@ -42,18 +43,12 @@ func (s *TextState) IsExpiredText() (bool, error) {
 	if s.Model.DownloadLimit != 0 && s.Model.DownloadCount >= s.Model.DownloadLimit {
 		s.Model.IsDeleted = true
 
-		// log.Printf("check IsDeleted file: %s/%s \n", s.Model.TextId, s.Model.TextName)
+		log.Printf("check IsDeleted text: %s \n", s.Model.TextId)
 
-		_, err := db.Engine.ID(s.Model.TextId).Cols("Is_deleted").Update(&s.Model)
+		_, err := db.Engine.ID(s.Model.Id).Cols("is_deleted").Update(&s.Model)
 		return true, err
 	}
 	return false, nil
-}
-
-func (s *TextState) GetTexts() ([]models.TextTracking, error) {
-	var texts []models.TextTracking
-	err := db.Engine.Where("is_deleted = ?", false).Find(&texts)
-	return texts, err
 }
 
 func (s *TextState) InsertFile() error {
@@ -61,6 +56,12 @@ func (s *TextState) InsertFile() error {
 		return errors.New("textId is empty, GetText first")
 	}
 
-	_, err := db.Engine.Insert()
+	_, err := db.Engine.Insert(&s.Model)
 	return err
+}
+
+func GetTexts() ([]models.TextTracking, error) {
+	var texts []models.TextTracking
+	err := db.Engine.Where("is_deleted = ?", false).Find(&texts)
+	return texts, err
 }

@@ -35,7 +35,7 @@ func CheckPasswordFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id and password"))
 	}
 
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 
 	if err != nil {
@@ -76,7 +76,7 @@ func DeleteFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 
 	if err != nil {
@@ -115,7 +115,7 @@ func DownloadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 
 	if err != nil {
@@ -135,7 +135,7 @@ func DownloadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailDataResponse(nil))
 	}
 
-	if isExp {
+	if !isExp {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file is expired"))
 	}
 
@@ -160,7 +160,7 @@ func GetFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
 	}
 
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 
 	if err != nil {
@@ -197,8 +197,7 @@ func GetFile(c *fiber.Ctx) error {
 // @Router /files [get]
 func ListFile(c *fiber.Ctx) error {
 
-	FileS := queries.FileState{}
-	files, err := FileS.GetFiles()
+	files, err := queries.GetFiles()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailDataResponse(nil))
 	}
@@ -239,7 +238,7 @@ func UploadFile(c *fiber.Ctx) error {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
 
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 
 	FileS.Model = models.FileTracking{
 		FileName:      data.Filename,
@@ -283,7 +282,7 @@ func UploadFile(c *fiber.Ctx) error {
 	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileS.Model.FileName, FileS.Model.FileSize, FileS.Model.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"fileId":        FileS.Model.FileId,
+		"id":            FileS.Model.FileId,
 		"filename":      FileS.Model.FileName,
 		"size":          FileS.Model.FileSize,
 		"isEncrypted":   FileS.Model.IsEncrypted,

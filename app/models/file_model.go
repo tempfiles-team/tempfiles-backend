@@ -4,7 +4,7 @@ import "time"
 
 type FileTracking struct {
 	Id            int64     `json:"-"`
-	FileId        string    `json:"fileId"`
+	FileId        string    `json:"id"`
 	FileName      string    `json:"filename"`
 	FileSize      int64     `json:"size"`
 	UploadDate    time.Time `json:"uploadDate"`

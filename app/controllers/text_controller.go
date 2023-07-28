@@ -27,7 +27,7 @@ func DeleteText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a text id"))
 	}
 
-	TextS := queries.TextState{}
+	TextS := new(queries.TextState)
 	has, err := TextS.GetText(id)
 
 	if err != nil {
@@ -56,8 +56,7 @@ func DeleteText(c *fiber.Ctx) error {
 // @Router /texts [get]
 func ListText(c *fiber.Ctx) error {
 
-	TextS := queries.TextState{}
-	texts, err := TextS.GetTexts()
+	texts, err := queries.GetTexts()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("text list error"))
 	}
@@ -82,7 +81,7 @@ func DownloadText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a text id"))
 	}
 
-	TextS := queries.TextState{}
+	TextS := new(queries.TextState)
 	has, err := TextS.GetText(id)
 
 	if err != nil {
@@ -106,7 +105,7 @@ func DownloadText(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"textId":        TextS.Model.TextId,
+		"id":            TextS.Model.TextId,
 		"textData":      TextS.Model.TextData,
 		"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
 		"downloadLimit": TextS.Model.DownloadLimit,
@@ -121,6 +120,7 @@ func DownloadText(c *fiber.Ctx) error {
 // @Tags text
 // @Accept */*
 // @Produce json
+// @Accept text/plain
 // @Param X-Download-Limit header string false "download limit"
 // @Param X-Time-Limit header string false "time limit"
 // @Success 200 {object} utils.Response
@@ -146,7 +146,7 @@ func UploadText(c *fiber.Ctx) error {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
 
-	TextS := queries.TextState{}
+	TextS := new(queries.TextState)
 	TextS.Model = models.TextTracking{
 		TextId:        utils.RandString(),
 		TextData:      pasteText,
@@ -161,7 +161,7 @@ func UploadText(c *fiber.Ctx) error {
 	log.Printf("Successfully uploaded %s, download limit %d\n", TextS.Model.TextId, TextS.Model.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"textId":        TextS.Model.TextId,
+		"id":            TextS.Model.TextId,
 		"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
 		"downloadLimit": TextS.Model.DownloadLimit,
 		"downloadCount": TextS.Model.DownloadCount,

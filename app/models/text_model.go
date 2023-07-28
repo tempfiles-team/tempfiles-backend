@@ -6,7 +6,7 @@ import (
 
 type TextTracking struct {
 	Id            int64     `json:"-"`
-	TextId        string    `json:"textId"`
+	TextId        string    `json:"id"`
 	TextData      string    `json:"data"`
 	UploadDate    time.Time `json:"uploadDate"`
 	DownloadCount int64     `json:"downloadCount"`

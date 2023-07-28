@@ -33,7 +33,7 @@ func (s *FileState) IncreaseDLCount() error {
 		return errors.New("fileId is empty, GetFile first")
 	}
 	s.Model.DownloadCount++
-	_, err := db.Engine.ID(s.Model.FileId).Update(&s.Model)
+	_, err := db.Engine.ID(s.Model.Id).Update(&s.Model)
 	return err
 }
 
@@ -47,7 +47,7 @@ func (s *FileState) IsExpiredFile() (bool, error) {
 
 		log.Printf("check IsDeleted file: %s/%s \n", s.Model.FileId, s.Model.FileName)
 
-		_, err := db.Engine.ID(s.Model.FileId).Cols("Is_deleted").Update(&s.Model)
+		_, err := db.Engine.ID(s.Model.Id).Cols("is_deleted").Update(&s.Model)
 		return true, err
 	}
 	return false, nil
@@ -62,7 +62,10 @@ func IsExpiredFiles() error {
 	for _, file := range files {
 		log.Printf("check IsDeleted file: %s/%s \n", file.FileId, file.FileName)
 		file.IsDeleted = true
-		if _, err := db.Engine.ID(file.FileId).Cols("Is_deleted").Update(&file); err != nil {
+
+		_, err := db.Engine.ID(file.Id).Cols("is_deleted").Update(&file)
+
+		if err != nil {
 			log.Printf("cron db update error, file: %s/%s, error: %s\n", file.FileId, file.FileName, err.Error())
 		}
 	}
@@ -81,20 +84,20 @@ func DelExpireFiles() error {
 		if err := os.RemoveAll("./tmp/" + file.FileId); err != nil {
 			log.Println("delete file error: ", err.Error())
 		}
-		if _, err := db.Engine.Delete(); err != nil {
+		if _, err := db.Engine.Delete(&file); err != nil {
 			log.Println("delete file error: ", err.Error())
 		}
 	}
 	return nil
 }
 
-func (s *FileState) GetFiles() ([]models.FileTracking, error) {
+func GetFiles() ([]models.FileTracking, error) {
 	var files []models.FileTracking
 	err := db.Engine.Where("is_deleted = ?", false).Find(&files)
 	return files, err
 }
 
 func (s *FileState) InsertFile() error {
-	_, err := db.Engine.Insert()
+	_, err := db.Engine.Insert(&s.Model)
 	return err
 }

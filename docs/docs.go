@@ -224,9 +224,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/info": {
+        "/list": {
             "get": {
-                "description": "get the information of server.",
+                "description": "List all items.",
                 "consumes": [
                     "*/*"
                 ],
@@ -236,15 +236,7 @@ const docTemplate = `{
                 "tags": [
                     "root"
                 ],
-                "summary": "Show the information of server.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "api name",
-                        "name": "api",
-                        "in": "query"
-                    }
-                ],
+                "summary": "List all items.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -259,7 +251,8 @@ const docTemplate = `{
             "post": {
                 "description": "Upload text item.",
                 "consumes": [
-                    "*/*"
+                    "*/*",
+                    "text/plain"
                 ],
                 "produces": [
                     "application/json"
@@ -459,10 +452,10 @@ const docTemplate = `{
                 "expireTime": {
                     "type": "string"
                 },
-                "fileId": {
+                "filename": {
                     "type": "string"
                 },
-                "filename": {
+                "id": {
                     "type": "string"
                 },
                 "isEncrypted": {
@@ -491,7 +484,7 @@ const docTemplate = `{
                 "expireTime": {
                     "type": "string"
                 },
-                "textId": {
+                "id": {
                     "type": "string"
                 },
                 "uploadDate": {

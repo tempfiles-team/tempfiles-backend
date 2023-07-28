@@ -8,9 +8,9 @@ definitions:
         type: integer
       expireTime:
         type: string
-      fileId:
-        type: string
       filename:
+        type: string
+      id:
         type: string
       isEncrypted:
         type: boolean
@@ -29,7 +29,7 @@ definitions:
         type: integer
       expireTime:
         type: string
-      textId:
+      id:
         type: string
       uploadDate:
         type: string
@@ -185,16 +185,11 @@ paths:
       summary: List file items.
       tags:
       - file
-  /info:
+  /list:
     get:
       consumes:
       - '*/*'
-      description: get the information of server.
-      parameters:
-      - description: api name
-        in: query
-        name: api
-        type: string
+      description: List all items.
       produces:
       - application/json
       responses:
@@ -202,7 +197,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/utils.Response'
-      summary: Show the information of server.
+      summary: List all items.
       tags:
       - root
   /text/{id}:
@@ -254,6 +249,7 @@ paths:
     post:
       consumes:
       - '*/*'
+      - text/plain
       description: Upload text item.
       parameters:
       - description: download limit

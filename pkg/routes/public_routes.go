@@ -15,6 +15,7 @@ func PublicRoutes(r fiber.Router) {
 	// Create routes group.
 
 	r.Get("/", controllers.HealthCheck)
+	r.Get("/list", controllers.ListAll)
 
 	r.Get("/files", controllers.ListFile)
 	r.Post("/upload", controllers.UploadFile)
@@ -36,7 +37,7 @@ func PublicRoutes(r fiber.Router) {
 
 		log.Printf("id: %v", id)
 
-		FileS := queries.FileState{}
+		FileS := new(queries.FileState)
 		has, err := FileS.GetFile(id)
 
 		if err != nil {

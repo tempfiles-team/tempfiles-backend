@@ -24,17 +24,16 @@ func CreateJWTToken(FileTracking models.FileTracking) (string, int64, error) {
 }
 
 func IsEncrypted(id string) bool {
-	FileS := queries.FileState{}
+	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 	if err != nil {
 		return false
 	}
+
 	if !has {
 		return false
 	}
-
-	// return !FileTracking.IsEncrypted
-	return FileS.Model.IsEncrypted
+	return !FileS.Model.IsEncrypted
 }
 
 var FileId string

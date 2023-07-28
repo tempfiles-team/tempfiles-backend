@@ -1,8 +1,10 @@
 package db
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/tempfiles-Team/tempfiles-backend/app/models"
 	"xorm.io/xorm"
 )
 
@@ -22,6 +24,19 @@ func OpenDBConnection() error {
 
 	if err != nil {
 		return err
+	}
+	// Try to ping database.
+	if err := db.Ping(); err != nil {
+		defer db.Close()
+		return fmt.Errorf("error, not sent ping to database, %w", err)
+	}
+	if err := db.Sync(new(models.FileTracking)); err != nil {
+		defer db.Close()
+		return fmt.Errorf("error, sync to database, %w", err)
+	}
+	if err := db.Sync(new(models.TextTracking)); err != nil {
+		defer db.Close()
+		return fmt.Errorf("error, sync to database, %w", err)
 	}
 
 	Engine = db

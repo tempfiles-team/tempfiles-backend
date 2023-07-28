@@ -39,20 +39,18 @@ func main() {
 		}
 	})
 
-	terminator.AddFunc("0 0 * * *", func() {
+	terminator.AddFunc("30 * * * *", func() {
 		if err := queries.DelExpireFiles(); err != nil {
 			log.Println("cron db query error", err.Error())
 		}
 	})
 	terminator.Start()
 
-	var err error
-
-	if utils.CheckTmpFolder() != nil {
+	if err := utils.CheckTmpFolder(); err != nil {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 
-	if db.OpenDBConnection() != nil {
+	if err := db.OpenDBConnection(); err != nil {
 		log.Fatalf("db connection error: %v", err)
 	}
 

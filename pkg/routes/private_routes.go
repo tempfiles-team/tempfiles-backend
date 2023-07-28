@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,9 +19,7 @@ func PrivateRouter(r fiber.Router) {
 		},
 
 		Filter: func(c *fiber.Ctx) bool {
-			//id or filename이 없으면 jwt 검사 안함
 			if len(strings.Split(c.OriginalURL(), "/")) != 3 {
-				// 핸들러가 알아서 에러를 반환함
 				return false
 			}
 
@@ -28,6 +27,8 @@ func PrivateRouter(r fiber.Router) {
 			if strings.Contains(id, "?") {
 				id = strings.Split(id, "?")[0]
 			}
+
+			fmt.Println(id)
 
 			utils.FileId = id
 
