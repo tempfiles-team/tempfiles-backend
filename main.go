@@ -1,18 +1,13 @@
 package main
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/robfig/cron"
-	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	_ "github.com/tempfiles-Team/tempfiles-backend/docs"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/configs"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/middleware"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/routes"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
-	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
 )
 
 // @title Tempfiles API
@@ -32,35 +27,14 @@ func main() {
 
 	middleware.FiberMiddleware(app)
 
-	terminator := cron.New()
-	terminator.AddFunc("0 * * * *", func() {
-		if err := queries.IsExpiredFiles(); err != nil {
-			log.Println("cron db query error", err.Error())
-		}
-	})
+	utils.ReadyComponent()
 
-	terminator.AddFunc("30 * * * *", func() {
-		if err := queries.DelExpireFiles(); err != nil {
-			log.Println("cron db query error", err.Error())
-		}
-	})
-	terminator.Start()
+	router := app.Group("/")
 
-	if err := utils.CheckTmpFolder(); err != nil {
-		log.Fatalf("tmp folder error: %v", err)
-	}
-
-	if err := db.OpenDBConnection(); err != nil {
-		log.Fatalf("db connection error: %v", err)
-	}
-
-	root := app.Group("/")
-
-	routes.SwaggerRoute(app)
-	routes.PublicRoutes(root)
-	routes.PrivateRouter(root)
-	routes.NotFoundRoute(app)
+	routes.SwaggerRoute(router)
+	routes.PublicRoutes(router)
+	routes.PrivateRouter(router)
+	routes.NotFoundRoute(router)
 
 	utils.StartServer(app)
-	terminator.Stop()
 }

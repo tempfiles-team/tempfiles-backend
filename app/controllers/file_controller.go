@@ -16,50 +16,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// CheckPasswordFile godoc
-// @Summary Check password of file item.
-// @Description Check password of file item.
-// @Tags file
-// @Accept */*
-// @Produce json
-// @Param id path string true "file id"
-// @Param pw query string true "password"
-// @Success 200 {object} utils.Response
-// @Router /checkpw/{id} [get]
-func CheckPasswordFile(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	pw := c.Query("pw", "")
-
-	if id == "" || pw == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id and password"))
-	}
-
-	FileS := new(queries.FileState)
-	has, err := FileS.GetFile(id)
-
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
-	}
-
-	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not found"))
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(FileS.Model.Password), []byte(pw)); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(utils.NewFailMessageResponse("password incorrect"))
-	}
-
-	token, _, err := utils.CreateJWTToken(FileS.Model)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("jwt create error"))
-	}
-
-	return c.JSON(utils.NewSuccessDataResponse(fiber.Map{
-		"token": token,
-	}))
-}
-
 // DeleteFile godoc
 // @Summary Delete file item.
 // @Description Delete file item.
@@ -126,17 +82,17 @@ func DownloadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file not found"))
 	}
 
-	if err := FileS.IncreaseDLCount(); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
-	}
-
 	isExp, err := FileS.IsExpiredFile()
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailDataResponse(nil))
 	}
 
-	if !isExp {
+	if isExp {
 		return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("file is expired"))
+	}
+
+	if err := FileS.IncreaseDLCount(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db update error"))
 	}
 
 	c.Response().Header.Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(FileS.Model.FileName), "+", "%20"))
@@ -241,14 +197,15 @@ func UploadFile(c *fiber.Ctx) error {
 	FileS := new(queries.FileState)
 
 	FileS.Model = models.FileTracking{
-		FileName:      data.Filename,
-		FileSize:      data.Size,
-		UploadDate:    time.Now(),
-		FileId:        utils.RandString(),
-		IsEncrypted:   password != "",
-		DownloadLimit: int64(downloadLimit),
-		ExpireTime:    expireTimeDate,
+		FileName: data.Filename,
+		FileSize: data.Size,
+		FileId:   utils.RandString(),
 	}
+
+	FileS.Model.UploadDate = time.Now()
+	FileS.Model.IsEncrypted = password != ""
+	FileS.Model.DownloadLimit = int64(downloadLimit)
+	FileS.Model.ExpireTime = expireTimeDate
 
 	var token string = ""
 	if FileS.Model.IsEncrypted {
@@ -257,7 +214,7 @@ func UploadFile(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("bcrypt hash error"))
 		}
 		FileS.Model.Password = string(hash)
-		token, _, err = utils.CreateJWTToken(FileS.Model)
+		token, _, err = utils.CreateJWTToken(FileS.Model.FileId)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("jwt create error"))
 		}
@@ -270,11 +227,6 @@ func UploadFile(c *fiber.Ctx) error {
 	if err := c.SaveFile(data, fmt.Sprintf("tmp/%s/%s", FileS.Model.FileId, FileS.Model.FileName)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("file save error"))
 	}
-
-	// _, err = queries.Engine.Insert(FileS.Model)
-	// if err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("database insert error"))
-	// }
 
 	if err := FileS.InsertFile(); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("database insert error"))

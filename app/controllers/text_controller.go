@@ -9,6 +9,7 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
 	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // DeleteText godoc
@@ -133,6 +134,8 @@ func UploadText(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(utils.NewFailMessageResponse("Please provide a text"))
 	}
 
+	password := c.Query("pw", "")
+
 	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
 	if err != nil {
 		downloadLimit = 0
@@ -148,11 +151,26 @@ func UploadText(c *fiber.Ctx) error {
 
 	TextS := new(queries.TextState)
 	TextS.Model = models.TextTracking{
-		TextId:        utils.RandString(),
-		TextData:      pasteText,
-		UploadDate:    time.Now(),
-		DownloadLimit: int64(downloadLimit),
-		ExpireTime:    expireTimeDate,
+		TextId:   utils.RandString(),
+		TextData: pasteText,
+	}
+
+	TextS.Model.UploadDate = time.Now()
+	TextS.Model.IsEncrypted = password != ""
+	TextS.Model.DownloadLimit = int64(downloadLimit)
+	TextS.Model.ExpireTime = expireTimeDate
+
+	var token string = ""
+	if TextS.Model.IsEncrypted {
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("bcrypt hash error"))
+		}
+		TextS.Model.Password = string(hash)
+		token, _, err = utils.CreateJWTToken(TextS.Model.TextId)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("jwt create error"))
+		}
 	}
 
 	if err := TextS.InsertFile(); err != nil {
@@ -162,7 +180,10 @@ func UploadText(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(utils.NewSuccessDataResponse(fiber.Map{
 		"id":            TextS.Model.TextId,
+		"textData":      TextS.Model.TextData,
+		"isEncrypted":   TextS.Model.IsEncrypted,
 		"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
+		"token":         token,
 		"downloadLimit": TextS.Model.DownloadLimit,
 		"downloadCount": TextS.Model.DownloadCount,
 		"expireTime":    TextS.Model.ExpireTime.Format(time.RFC3339),

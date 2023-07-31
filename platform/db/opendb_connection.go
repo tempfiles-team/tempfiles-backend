@@ -2,18 +2,19 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
-	"xorm.io/xorm"
+	"gorm.io/gorm"
 )
 
-var Engine *xorm.Engine
+var Engine *gorm.DB
 
 // OpenDBConnection func for opening database connection.
 func OpenDBConnection() error {
 
-	var db *xorm.Engine
+	var db *gorm.DB
 	var err error
 
 	if os.Getenv("DB_TYPE") == "sqlite" {
@@ -26,20 +27,25 @@ func OpenDBConnection() error {
 		return err
 	}
 	// Try to ping database.
-	if err := db.Ping(); err != nil {
-		defer db.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
 		return fmt.Errorf("error, not sent ping to database, %w", err)
 	}
-	if err := db.Sync(new(models.FileTracking)); err != nil {
-		defer db.Close()
-		return fmt.Errorf("error, sync to database, %w", err)
+	err = sqlDB.Ping()
+	if err != nil {
+		sqlDB.Close()
+		return fmt.Errorf("error, not sent ping to database, %w", err)
 	}
-	if err := db.Sync(new(models.TextTracking)); err != nil {
-		defer db.Close()
-		return fmt.Errorf("error, sync to database, %w", err)
+
+	err = db.AutoMigrate(&models.FileTracking{}, &models.TextTracking{})
+	if err != nil {
+		sqlDB.Close()
+		return fmt.Errorf("error, auto migration failed, %w", err)
 	}
 
 	Engine = db
+
+	log.Println("Database connection successful. ⚡")
 
 	return nil
 }

@@ -3,27 +3,31 @@ package queries
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
 	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
+	"gorm.io/gorm"
 )
 
 type TextState struct {
 	Model models.TextTracking
 }
 
-func (s *TextState) GetText(fileId string) (bool, error) {
-	s.Model = models.TextTracking{TextId: fileId}
-	has, err := db.Engine.Get(&s.Model)
-	return has, err
+func (s *TextState) GetText(textId string) (bool, error) {
+	result := db.Engine.Where("text_id = ?", textId).First(&s.Model)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	return true, result.Error
 }
 
 func (s *TextState) DelText() error {
 	if s.Model.TextId == "" {
 		return errors.New("textId is empty, GetText first")
 	}
-	_, err := db.Engine.Delete(&s.Model)
-	return err
+	result := db.Engine.Delete(&s.Model)
+	return result.Error
 }
 
 func (s *TextState) IncreaseDLCount() error {
@@ -31,8 +35,8 @@ func (s *TextState) IncreaseDLCount() error {
 		return errors.New("textId is empty, GetText first")
 	}
 	s.Model.DownloadCount++
-	_, err := db.Engine.ID(s.Model.Id).Update(&s.Model)
-	return err
+	result := db.Engine.Save(&s.Model)
+	return result.Error
 }
 
 func (s *TextState) IsExpiredText() (bool, error) {
@@ -45,8 +49,8 @@ func (s *TextState) IsExpiredText() (bool, error) {
 
 		log.Printf("check IsDeleted text: %s \n", s.Model.TextId)
 
-		_, err := db.Engine.ID(s.Model.Id).Cols("is_deleted").Update(&s.Model)
-		return true, err
+		result := db.Engine.Model(&s.Model).Where("id = ?", s.Model.Id).Update("is_deleted", s.Model.IsDeleted)
+		return true, result.Error
 	}
 	return false, nil
 }
@@ -56,12 +60,46 @@ func (s *TextState) InsertFile() error {
 		return errors.New("textId is empty, GetText first")
 	}
 
-	_, err := db.Engine.Insert(&s.Model)
-	return err
+	result := db.Engine.Create(&s.Model)
+	return result.Error
 }
 
 func GetTexts() ([]models.TextTracking, error) {
 	var texts []models.TextTracking
-	err := db.Engine.Where("is_deleted = ?", false).Find(&texts)
+	err := db.Engine.Where("is_deleted = ?", false).Find(&texts).Error
 	return texts, err
+}
+
+func IsExpiredTexts() error {
+	var texts []models.TextTracking
+	if err := db.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&texts).Error; err != nil {
+		log.Println("cron db query error", err.Error())
+	}
+
+	for _, text := range texts {
+		log.Printf("check IsDeleted text: %s \n", text.TextId)
+		text.IsDeleted = true
+
+		result := db.Engine.Model(&text).Where("id = ?", text.Id).Update("is_deleted", text.IsDeleted)
+
+		if result.Error != nil {
+			log.Printf("cron db update error, text: %s, error: %s\n", text.TextId, result.Error.Error())
+		}
+	}
+
+	return nil
+}
+
+func DelExpireTexts() error {
+	var texts []models.FileTracking
+	// IsDeleted가 false인 파일만 가져옴
+	if err := db.Engine.Where("is_deleted = ?", true).Find(&texts).Error; err != nil {
+		log.Println("text list error: ", err.Error())
+	}
+	for _, text := range texts {
+		if err := db.Engine.Delete(&text).Error; err != nil {
+			log.Println("delete text error: ", err.Error())
+		}
+	}
+	return nil
 }

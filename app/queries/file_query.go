@@ -8,6 +8,7 @@ import (
 
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
 	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
+	"gorm.io/gorm"
 )
 
 type FileState struct {
@@ -15,17 +16,19 @@ type FileState struct {
 }
 
 func (s *FileState) GetFile(fileId string) (bool, error) {
-	s.Model = models.FileTracking{FileId: fileId}
-	has, err := db.Engine.Get(&s.Model)
-	return has, err
+	result := db.Engine.Where("file_id = ?", fileId).First(&s.Model)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	return true, result.Error
 }
 
 func (s *FileState) DelFile() error {
 	if s.Model.FileId == "" {
 		return errors.New("fileId is empty, GetFile first")
 	}
-	_, err := db.Engine.Delete(&s.Model)
-	return err
+	result := db.Engine.Delete(&s.Model)
+	return result.Error
 }
 
 func (s *FileState) IncreaseDLCount() error {
@@ -33,8 +36,19 @@ func (s *FileState) IncreaseDLCount() error {
 		return errors.New("fileId is empty, GetFile first")
 	}
 	s.Model.DownloadCount++
-	_, err := db.Engine.ID(s.Model.Id).Update(&s.Model)
-	return err
+	result := db.Engine.Save(&s.Model)
+	return result.Error
+}
+
+func GetFiles() ([]models.FileTracking, error) {
+	var files []models.FileTracking
+	err := db.Engine.Where("is_deleted = ?", false).Find(&files).Error
+	return files, err
+}
+
+func (s *FileState) InsertFile() error {
+	result := db.Engine.Create(&s.Model)
+	return result.Error
 }
 
 func (s *FileState) IsExpiredFile() (bool, error) {
@@ -47,15 +61,15 @@ func (s *FileState) IsExpiredFile() (bool, error) {
 
 		log.Printf("check IsDeleted file: %s/%s \n", s.Model.FileId, s.Model.FileName)
 
-		_, err := db.Engine.ID(s.Model.Id).Cols("is_deleted").Update(&s.Model)
-		return true, err
+		result := db.Engine.Model(&s.Model).Where("id = ?", s.Model.Id).Update("is_deleted", s.Model.IsDeleted)
+		return true, result.Error
 	}
 	return false, nil
 }
 
 func IsExpiredFiles() error {
 	var files []models.FileTracking
-	if err := db.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files); err != nil {
+	if err := db.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files).Error; err != nil {
 		log.Println("cron db query error", err.Error())
 	}
 
@@ -63,10 +77,10 @@ func IsExpiredFiles() error {
 		log.Printf("check IsDeleted file: %s/%s \n", file.FileId, file.FileName)
 		file.IsDeleted = true
 
-		_, err := db.Engine.ID(file.Id).Cols("is_deleted").Update(&file)
+		result := db.Engine.Model(&file).Where("id = ?", file.Id).Update("is_deleted", file.IsDeleted)
 
-		if err != nil {
-			log.Printf("cron db update error, file: %s/%s, error: %s\n", file.FileId, file.FileName, err.Error())
+		if result.Error != nil {
+			log.Printf("cron db update error, file: %s/%s, error: %s\n", file.FileId, file.FileName, result.Error.Error())
 		}
 	}
 
@@ -76,7 +90,7 @@ func IsExpiredFiles() error {
 func DelExpireFiles() error {
 	var files []models.FileTracking
 	// IsDeleted가 false인 파일만 가져옴
-	if err := db.Engine.Where("is_deleted = ?", true).Find(&files); err != nil {
+	if err := db.Engine.Where("is_deleted = ?", true).Find(&files).Error; err != nil {
 		log.Println("file list error: ", err.Error())
 	}
 	for _, file := range files {
@@ -84,20 +98,9 @@ func DelExpireFiles() error {
 		if err := os.RemoveAll("./tmp/" + file.FileId); err != nil {
 			log.Println("delete file error: ", err.Error())
 		}
-		if _, err := db.Engine.Delete(&file); err != nil {
+		if err := db.Engine.Delete(&file).Error; err != nil {
 			log.Println("delete file error: ", err.Error())
 		}
 	}
 	return nil
-}
-
-func GetFiles() ([]models.FileTracking, error) {
-	var files []models.FileTracking
-	err := db.Engine.Where("is_deleted = ?", false).Find(&files)
-	return files, err
-}
-
-func (s *FileState) InsertFile() error {
-	_, err := db.Engine.Insert(&s.Model)
-	return err
 }

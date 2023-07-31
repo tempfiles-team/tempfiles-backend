@@ -4,19 +4,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/tempfiles-Team/tempfiles-backend/app/models"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 )
 
-func CreateJWTToken(FileTracking models.FileTracking) (string, int64, error) {
+func CreateJWTToken(fileId string) (string, int64, error) {
 	exp := time.Now().Add(time.Minute * 10).Unix()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = FileTracking.Id
-	claims["file_id"] = FileTracking.FileId
+	claims["file_id"] = fileId
 	claims["exp"] = exp
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET") + FileTracking.FileId))
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET") + fileId))
 	if err != nil {
 		return "", 0, err
 	}
@@ -24,35 +22,29 @@ func CreateJWTToken(FileTracking models.FileTracking) (string, int64, error) {
 }
 
 func IsEncrypted(id string) bool {
+
+	// 오류가 발생한 경우 암호화된 파일로 간주
 	FileS := new(queries.FileState)
 	has, err := FileS.GetFile(id)
 	if err != nil {
-		return false
+		return true
 	}
 
-	if !has {
-		return false
+	if has {
+		return FileS.Model.IsEncrypted
 	}
-	return !FileS.Model.IsEncrypted
-}
 
-var FileId string
+	TextS := new(queries.TextState)
+	has, err = TextS.GetText(id)
 
-func IsMatched() jwt.Keyfunc {
-	return func(token *jwt.Token) (interface{}, error) {
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			return nil, nil
-		}
-		fileId, ok := claims["file_id"].(string)
-		if !ok {
-			return nil, nil
-		}
-
-		if fileId != FileId {
-			return nil, nil
-		}
-
-		return []byte(os.Getenv("JWT_SECRET") + fileId), nil
+	if err != nil {
+		return true
 	}
+
+	if has {
+		return TextS.Model.IsEncrypted
+	}
+
+	return true
+
 }
