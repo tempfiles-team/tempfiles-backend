@@ -6,7 +6,7 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/middleware"
 )
 
-func PrivateRouter(r fiber.Router) {
+func PrivateRoutes(r fiber.Router) {
 
 	r.Use(middleware.IdVaildator(), middleware.JWTProtected())
 

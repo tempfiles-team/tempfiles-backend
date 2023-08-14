@@ -33,7 +33,7 @@ func main() {
 
 	routes.SwaggerRoute(router)
 	routes.PublicRoutes(router)
-	routes.PrivateRouter(router)
+	routes.PrivateRoutes(router)
 	routes.NotFoundRoute(router)
 
 	utils.StartServer(app)

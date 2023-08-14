@@ -131,7 +131,7 @@ func UploadText(c *fiber.Ctx) error {
 	pasteText := string(c.Body())
 
 	if pasteText == "" {
-		return c.Status(fiber.StatusOK).JSON(utils.NewFailMessageResponse("Please provide a text"))
+		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a text"))
 	}
 
 	password := c.Query("pw", "")

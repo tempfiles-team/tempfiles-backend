@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/tempfiles-Team/tempfiles-backend/app/models"
-	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
+	db "github.com/tempfiles-Team/tempfiles-backend/database"
 	"gorm.io/gorm"
 )
 

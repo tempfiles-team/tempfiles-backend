@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/tempfiles-Team/tempfiles-backend/app/queries"
 	"github.com/tempfiles-Team/tempfiles-backend/pkg/utils"
@@ -108,4 +111,60 @@ func CheckPasswordFile(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusUnauthorized).JSON(utils.NewFailMessageResponse("password is incorrect"))
 
+}
+
+func GetDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(utils.NewFailMessageResponse("Please provide a file id"))
+	}
+
+	FileS := new(queries.FileState)
+	has, err := FileS.GetFile(id)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
+	}
+	backendUrl := c.BaseURL()
+
+	if has {
+		return c.JSON(utils.NewSuccessDataResponse(fiber.Map{
+			"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileS.Model.FileId),
+			"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileS.Model.FileId),
+			"type":          "file",
+			"filename":      FileS.Model.FileName,
+			"size":          FileS.Model.FileSize,
+			"uploadDate":    FileS.Model.UploadDate.Format(time.RFC3339),
+			"isEncrypted":   FileS.Model.IsEncrypted,
+			"provide_token": c.Query("token") != "",
+			"downloadLimit": FileS.Model.DownloadLimit,
+			"downloadCount": FileS.Model.DownloadCount,
+			"expireTime":    FileS.Model.ExpireTime.Format(time.RFC3339),
+		}))
+	}
+
+	TextS := new(queries.TextState)
+	has, err = TextS.GetText(id)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.NewFailMessageResponse("db query error"))
+	}
+
+	if has {
+		return c.JSON(utils.NewSuccessDataResponse(fiber.Map{
+			"delete_url":    fmt.Sprintf("%s/text/%s", backendUrl, TextS.Model.TextId),
+			"download_url":  fmt.Sprintf("%s/text/%s", backendUrl, TextS.Model.TextId),
+			"type":          "text",
+			"size":          TextS.Model.TextCount,
+			"uploadDate":    TextS.Model.UploadDate.Format(time.RFC3339),
+			"isEncrypted":   TextS.Model.IsEncrypted,
+			"provide_token": c.Query("token") != "",
+			"downloadLimit": TextS.Model.DownloadLimit,
+			"downloadCount": TextS.Model.DownloadCount,
+			"expireTime":    TextS.Model.ExpireTime.Format(time.RFC3339),
+		}))
+	}
+
+	return c.Status(fiber.StatusNotFound).JSON(utils.NewFailMessageResponse("not found"))
 }

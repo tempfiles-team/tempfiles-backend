@@ -20,5 +20,8 @@ func PublicRoutes(r fiber.Router) {
 	r.Post("/text/new", controllers.UploadText)
 
 	r.Get("/file/:id", middleware.IdVaildator(), controllers.GetFile)
+
+	r.Get("/detail/:id", middleware.IdVaildator(), controllers.GetDetail)
+
 	r.Get("/checkpw/:id", middleware.IdVaildator(), controllers.CheckPasswordFile)
 }

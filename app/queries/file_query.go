@@ -6,9 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/tempfiles-Team/tempfiles-backend/app/models"
-	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
 	"gorm.io/gorm"
+
+	"github.com/tempfiles-Team/tempfiles-backend/app/models"
+	db "github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 type FileState struct {

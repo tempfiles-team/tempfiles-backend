@@ -7,7 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tempfiles-Team/tempfiles-backend/platform/db"
+
+	db "github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
 // StartServerWithGracefulShutdown function for starting server with a graceful shutdown.
@@ -52,7 +53,7 @@ func ReadyComponent() {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 
-	if err := db.OpenDBConnection(); err != nil {
+	if err := db.NewConnection(); err != nil {
 		log.Fatalf("db connection error: %v", err)
 	}
 
