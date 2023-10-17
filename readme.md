@@ -58,17 +58,17 @@ go run .
 
 ## test server
 
-https://api.tempfiles.ml
+https://api.tmpf.me
 
 - 파일 목록 조회 [Get]
-  https://api.tempfiles.ml/list
+  https://api.tmpf.me/list
 
 - 파일 업로드 [Post]  
   multipart/form-data "file" 필드에 업로드할 파일을 넣어서 요청  
-  https://api.tempfiles.ml/upload
+  https://api.tmpf.me/upload
 
 - 파일 다운로드 [Get]
-  https://api.tempfiles.ml/dl/(file_id)
+  https://api.tmpf.me/dl/(file_id)
 
 - 파일 삭제 [Delete]
-  https://api.tempfiles.ml/del/(file_id)
+  https://api.tmpf.me/del/(file_id)
