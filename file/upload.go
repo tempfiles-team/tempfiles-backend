@@ -80,6 +80,7 @@ func UploadHandler(c *fiber.Ctx) error {
 			})
 		}
 	}
+
 	_, err = database.Engine.Insert(FileTracking)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

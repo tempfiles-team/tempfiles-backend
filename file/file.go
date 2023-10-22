@@ -48,6 +48,7 @@ func FileHandler(c *fiber.Ctx) error {
 			"isEncrypted":   FileTracking.IsEncrypted,
 			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
 			"files":         files,
+			"folderId":      FileTracking.FolderId,
 			"provideToken":  c.Query("token") != "",
 			"downloadLimit": FileTracking.DownloadLimit,
 			"downloadCount": FileTracking.DownloadCount,
