@@ -13,9 +13,9 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = FileTracking.Id
-	claims["file_id"] = FileTracking.FileId
+	claims["file_id"] = FileTracking.FolderId
 	claims["exp"] = exp
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET") + FileTracking.FileId))
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET") + FileTracking.FolderId))
 	if err != nil {
 		return "", 0, err
 	}
@@ -24,7 +24,7 @@ func CreateJWTToken(FileTracking database.FileTracking) (string, int64, error) {
 
 func IsEncrypted(id string) bool {
 	FileTracking := database.FileTracking{
-		FileId: id,
+		FolderId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
@@ -38,7 +38,7 @@ func IsEncrypted(id string) bool {
 	return !FileTracking.IsEncrypted
 }
 
-var FileId string
+var FolderId string
 
 func IsMatched() jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
@@ -46,15 +46,15 @@ func IsMatched() jwt.Keyfunc {
 		if !ok {
 			return nil, nil
 		}
-		fileId, ok := claims["file_id"].(string)
+		folderId, ok := claims["file_id"].(string)
 		if !ok {
 			return nil, nil
 		}
 
-		if fileId != FileId {
+		if folderId != FolderId {
 			return nil, nil
 		}
 
-		return []byte(os.Getenv("JWT_SECRET") + fileId), nil
+		return []byte(os.Getenv("JWT_SECRET") + folderId), nil
 	}
 }

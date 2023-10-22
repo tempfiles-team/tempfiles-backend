@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,7 +18,7 @@ func FileHandler(c *fiber.Ctx) error {
 	}
 
 	FileTracking := database.FileTracking{
-		FileId: id,
+		FolderId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
@@ -38,19 +37,21 @@ func FileHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	backendUrl := c.BaseURL()
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "file found",
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
-		"isEncrypted":   FileTracking.IsEncrypted,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileTracking.FileId),
-		"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileTracking.FileId),
-		"provide_token": c.Query("token") != "",
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-	})
+	if files, err := GetFiles(FileTracking.FolderId, c.BaseURL()); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "folder not found",
+			"error":   nil,
+		})
+	} else {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"message":       "file found",
+			"isEncrypted":   FileTracking.IsEncrypted,
+			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
+			"files":         files,
+			"provideToken":  c.Query("token") != "",
+			"downloadLimit": FileTracking.DownloadLimit,
+			"downloadCount": FileTracking.DownloadCount,
+			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
+		})
+	}
 }

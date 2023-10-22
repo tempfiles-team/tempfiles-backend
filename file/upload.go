@@ -13,7 +13,8 @@ import (
 )
 
 func UploadHandler(c *fiber.Ctx) error {
-	data, err := c.FormFile("file")
+
+	form, err := c.MultipartForm()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Please upload a file (multipart/form-data)",
@@ -22,12 +23,12 @@ func UploadHandler(c *fiber.Ctx) error {
 	}
 
 	password := c.Query("pw", "")
-
 	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
 	if err != nil {
-		downloadLimit = 0
+		downloadLimit = 100
 	}
 	expireTime, err := strconv.Atoi(string(c.Request().Header.Peek("X-Time-Limit")))
+
 	var expireTimeDate time.Time
 	if err != nil || expireTime < 0 || expireTime == 0 {
 		// 기본 3시간 후 만료
@@ -37,10 +38,9 @@ func UploadHandler(c *fiber.Ctx) error {
 	}
 
 	FileTracking := &database.FileTracking{
-		FileName:      data.Filename,
-		FileSize:      data.Size,
+		FileCount:     len(form.File["file"]),
+		FolderId:      database.RandString(),
 		UploadDate:    time.Now(),
-		FileId:        database.RandString(),
 		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate,
@@ -65,20 +65,21 @@ func UploadHandler(c *fiber.Ctx) error {
 		}
 	}
 
-	if CheckFileFolder(FileTracking.FileId) != nil {
+	if CheckFileFolder(FileTracking.FolderId) != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "file folder creation error",
 			"error":   err.Error(),
 		})
 	}
 
-	if err := c.SaveFile(data, fmt.Sprintf("tmp/%s/%s", FileTracking.FileId, FileTracking.FileName)); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "file save error",
-			"error":   err.Error(),
-		})
+	for _, file := range form.File["file"] {
+		if err := c.SaveFile(file, fmt.Sprintf("tmp/%s/%s", FileTracking.FolderId, file.Filename)); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "file save error",
+				"error":   err.Error(),
+			})
+		}
 	}
-
 	_, err = database.Engine.Insert(FileTracking)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -87,13 +88,11 @@ func UploadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileTracking.FileName, FileTracking.FileSize, FileTracking.DownloadLimit)
+	log.Printf("Successfully uploaded %s, download limit %d\n", FileTracking.FolderId, FileTracking.DownloadLimit)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":       "File uploaded successfully",
-		"fileId":        FileTracking.FileId,
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
+		"folderId":      FileTracking.FolderId,
 		"isEncrypted":   FileTracking.IsEncrypted,
 		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
 		"token":         token,

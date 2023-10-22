@@ -21,7 +21,7 @@ func CheckPasswordHandler(c *fiber.Ctx) error {
 	}
 
 	FileTracking := database.FileTracking{
-		FileId: id,
+		FolderId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
