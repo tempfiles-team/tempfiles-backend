@@ -11,7 +11,6 @@ type FileListResponse struct {
 	FileName    string `json:"fileName"`
 	FileSize    int64  `json:"fileSize"`
 	DownloadUrl string `json:"downloadUrl"`
-	DeleteUrl   string `json:"deleteUrl"`
 }
 
 func CheckIsFileExist(folderId, fileName string) bool {
@@ -31,7 +30,6 @@ func GetFiles(folderId, baseUrl string) ([]FileListResponse, error) {
 				FileName:    filepath.Base(path),
 				FileSize:    info.Size(),
 				DownloadUrl: baseUrl + "/dl/" + folderId + "/" + strings.ReplaceAll(url.PathEscape(filepath.Base(path)), "+", "%20"),
-				DeleteUrl:   baseUrl + "/del/" + folderId + "/" + strings.ReplaceAll(url.PathEscape(filepath.Base(path)), "+", "%20"),
 			})
 		}
 		return nil

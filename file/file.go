@@ -37,7 +37,9 @@ func FileHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	if files, err := GetFiles(FileTracking.FolderId, c.BaseURL()); err != nil {
+	baseUrl := c.BaseURL()
+
+	if files, err := GetFiles(FileTracking.FolderId, baseUrl); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "folder not found",
 			"error":   nil,
@@ -53,6 +55,7 @@ func FileHandler(c *fiber.Ctx) error {
 			"downloadLimit": FileTracking.DownloadLimit,
 			"downloadCount": FileTracking.DownloadCount,
 			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
+			"deleteUrl":     baseUrl + "/del/" + FileTracking.FolderId,
 		})
 	}
 }
