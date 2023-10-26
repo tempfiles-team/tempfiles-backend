@@ -15,11 +15,10 @@ import (
 type FileTracking struct {
 	Id         int64  `json:"-"`
 	FolderHash string `json:"-"`
-	IsHidden   bool   `json:"-"`
 	IsDeleted  bool   `json:"-"`
 
+	IsHidden      bool      `json:"isHidden"`
 	FolderId      string    `json:"folderId"`
-	FolderSize    int64     `json:"folderSize"`
 	FileCount     int       `json:"fileCount"`
 	DownloadCount int64     `json:"downloadCount"`
 	DownloadLimit int64     `json:"downloadLimit"`

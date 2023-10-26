@@ -79,15 +79,9 @@ func UploadHandler(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(200, gin.H{
-			"message":       "Duplicate entries with matching file names and contents have already been uploaded.",
-			"folderId":      FileTracking.FolderId,
-			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-			"downloadLimit": FileTracking.DownloadLimit,
-			"downloadCount": FileTracking.DownloadCount,
-			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-			"error":         nil,
-		})
+
+		// TODO: Add message to response
+		c.JSON(200, FileTracking)
 		return
 	}
 
@@ -130,12 +124,6 @@ func UploadHandler(c *gin.Context) {
 
 	log.Printf("Successfully uploaded %s, download limit %d\n", FileTracking.FolderId, FileTracking.DownloadLimit)
 
-	c.JSON(200, gin.H{
-		"message":       "File uploaded successfully",
-		"folderId":      FileTracking.FolderId,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-	})
+	// TODO: Add message to response
+	c.JSON(200, FileTracking)
 }

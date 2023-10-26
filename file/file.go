@@ -1,8 +1,6 @@
 package file
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
@@ -49,15 +47,6 @@ func FileHandler(c *gin.Context) {
 		})
 		return
 	} else {
-		c.JSON(200, gin.H{
-			"message":       "file found",
-			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-			"files":         files,
-			"folderId":      FileTracking.FolderId,
-			"downloadLimit": FileTracking.DownloadLimit,
-			"downloadCount": FileTracking.DownloadCount,
-			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-			"deleteUrl":     baseUrl + "/del/" + FileTracking.FolderId,
-		})
+		c.JSON(200, new(FileResponse).NewFileResponse(FileTracking, files, "file found", baseUrl))
 	}
 }

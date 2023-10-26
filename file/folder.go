@@ -7,12 +7,6 @@ import (
 	"strings"
 )
 
-type FileListResponse struct {
-	FileName    string `json:"fileName"`
-	FileSize    int64  `json:"fileSize"`
-	DownloadUrl string `json:"downloadUrl"`
-}
-
 func CheckIsFileExist(folderId, fileName string) bool {
 	if _, err := os.Stat("tmp/" + folderId + "/" + fileName); os.IsNotExist(err) {
 		return false
