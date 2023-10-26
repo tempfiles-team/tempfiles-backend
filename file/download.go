@@ -17,6 +17,7 @@ func DownloadHandler(c *gin.Context) {
 			"message": "invalid file name",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	if id == "" {
@@ -25,6 +26,7 @@ func DownloadHandler(c *gin.Context) {
 			"error":    nil,
 			"download": false,
 		})
+		return
 	}
 
 	FileTracking := database.FileTracking{
@@ -38,6 +40,7 @@ func DownloadHandler(c *gin.Context) {
 			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	if !has {
@@ -45,6 +48,7 @@ func DownloadHandler(c *gin.Context) {
 			"message": "folder not found",
 			"error":   nil,
 		})
+		return
 	}
 
 	if !CheckIsFileExist(FileTracking.FolderId, name) {
@@ -52,6 +56,7 @@ func DownloadHandler(c *gin.Context) {
 			"message": "file not found!!",
 			"error":   nil,
 		})
+		return
 	}
 
 	// db DownloadCount +1
@@ -61,6 +66,7 @@ func DownloadHandler(c *gin.Context) {
 			"message": "db update error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	// Download Limit check
@@ -74,6 +80,7 @@ func DownloadHandler(c *gin.Context) {
 				"message": "db update error",
 				"error":   err.Error(),
 			})
+			return
 		}
 	}
 

@@ -8,17 +8,17 @@ import (
 func ListHandler(c *gin.Context) {
 
 	var files []database.FileTracking
-	// IsDeleted가 false인 파일만 가져옴
-	if err := database.Engine.Where("is_deleted = ?", false).Find(&files); err != nil {
-		c.JSON(400, gin.H{
-			"message": "file list error",
+
+	if err := database.Engine.Where("is_deleted = ? AND is_hidden = ?", false, false).Find(&files); err != nil {
+		c.JSON(500, gin.H{
+			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	c.JSON(200, gin.H{
-		"message":      "File list successfully",
-		"list":         files,
-		"numberOfList": len(files),
+		"message": "File list successfully",
+		"list":    files,
 	})
 }

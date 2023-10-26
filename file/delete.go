@@ -16,6 +16,7 @@ func DeleteHandler(c *gin.Context) {
 			"error":   nil,
 			"delete":  false,
 		})
+		return
 	}
 
 	FileTracking := database.FileTracking{
@@ -29,6 +30,7 @@ func DeleteHandler(c *gin.Context) {
 			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	if !has {
@@ -36,6 +38,7 @@ func DeleteHandler(c *gin.Context) {
 			"message": "file not found",
 			"error":   nil,
 		})
+		return
 	}
 
 	if err := os.RemoveAll("tmp/" + FileTracking.FolderId); err != nil {
@@ -46,13 +49,13 @@ func DeleteHandler(c *gin.Context) {
 		})
 	}
 
-	//db에서 삭제
 	if _, err := database.Engine.Delete(&FileTracking); err != nil {
 		c.JSON(500, gin.H{
 			"message": "db delete error",
 			"error":   err.Error(),
 			"delete":  false,
 		})
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -60,5 +63,4 @@ func DeleteHandler(c *gin.Context) {
 		"error":   nil,
 		"delete":  true,
 	})
-
 }

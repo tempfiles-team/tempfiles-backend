@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	limits "github.com/gin-contrib/size"
 
 	"github.com/gin-gonic/gin"
@@ -14,21 +15,15 @@ import (
 	"github.com/tempfiles-Team/tempfiles-backend/file"
 )
 
-type LoginRequest struct {
-	Email    string
-	Password string
-}
-
 func main() {
 	app := gin.Default()
 	app.Use(limits.RequestSizeLimiter(int64(math.Pow(1024, 3)))) // 1 == 1byte, = 1GB
 
-	// app.Use(
-	// 	cors.New(cors.Config{
-	// 		AllowOrigins: "*",
-	// 		AllowHeaders: "Origin, Content-Type, Accept, X-Download-Limit, X-Time-Limit",
-	// 		AllowMethods: "GET, POST, DELETE",
-	// 	}))
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "X-Download-Limit", "X-Time-Limit", "X-Hidden"}
+	config.AllowMethods = []string{"GET", "POST", "DELETE"}
+	app.Use(cors.New(config))
 
 	// terminator := cron.New()
 	// terminator.AddFunc("* */1 * * *", func() {
@@ -152,71 +147,12 @@ func main() {
 	app.GET("/list", file.ListHandler)
 	app.POST("/upload", file.UploadHandler)
 
-	// app.Use(func(c *gin.Context) error {
-	// 	if len(strings.Split(c.OriginalURL(), "/")) != 3 {
-	// 		// TODO: FIX THIS PART
-	// 		if strings.Contains(c.OriginalURL(), "/dl/") {
-	// 			return c.Next()
-	// 		}
+	// TODO: check id is valid (check is not delete)
 
-	// 		return c.Status(fiber.StatusBadRequest).JSON(gin.H{
-	// 			"message": "invalid url",
-	// 		})
-	// 	}
+	app.GET("/file/:id", file.FileHandler)
 
-	// 	id := strings.Split(c.OriginalURL(), "/")[2]
-	// 	if strings.Contains(id, "?") {
-	// 		id = strings.Split(id, "?")[0]
-	// 	}
-
-	// 	log.Printf("id: %v", id)
-
-	// 	file := database.FileTracking{FolderId: id}
-	// 	database.Engine.GET(&file)
-	// 	if file.IsDeleted {
-	// 		c.JSON(404, gin.H{
-	// 			"message": "file is deleted",
-	// 		})
-	// 	}
-	// 	return c.Next()
-	// })
-
-	// app.GET("/file/:id", file.FileHandler)
-	// app.GET("/checkpw/:id", file.CheckPasswordHandler)
-
-	// app.Use(jwtware.New(jwtware.Config{
-	// 	TokenLookup: "query:token",
-	// 	ErrorHandler: func(c *gin.Context, err error) error {
-	// 		return c.Status(fiber.StatusUnauthorized).JSON(gin.H{
-	// 			"message": "file is password protected / Unauthorized",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	},
-
-	// 	Filter: func(c *gin.Context) bool {
-	// 		//id or filename이 없으면 jwt 검사 안함
-
-	// 		// TODO: FIX THIS PART
-
-	// 		if len(strings.Split(c.OriginalURL(), "/")) != 3 && !strings.Contains(c.OriginalURL(), "/dl/") {
-	// 			// 핸들러가 알아서 에러를 반환함
-	// 			return false
-	// 		}
-
-	// 		id := strings.Split(c.OriginalURL(), "/")[2]
-	// 		if strings.Contains(id, "?") {
-	// 			id = strings.Split(id, "?")[0]
-	// 		}
-
-	// 		jwt.FolderId = id
-
-	// 		return jwt.IsEncrypted(id)
-	// 	},
-	// 	KeyFunc: jwt.IsMatched(),
-	// }))
-
-	// app.GET("/dl/:id/:name", file.DownloadHandler)
-	// app.Delete("/del/:id", file.DeleteHandler)
+	app.GET("/dl/:id/:name", file.DownloadHandler)
+	app.DELETE("/del/:id", file.DeleteHandler)
 
 	if os.Getenv("BACKEND_PORT") == "" {
 		os.Setenv("BACKEND_PORT", "5000")

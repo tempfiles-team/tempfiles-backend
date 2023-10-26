@@ -28,7 +28,10 @@ func UploadHandler(c *gin.Context) {
 		return
 	}
 
-	password := c.Query("pw")
+	isHidden, err := strconv.ParseBool(c.GetHeader("X-Hidden"))
+	if err != nil {
+		isHidden = false
+	}
 
 	downloadLimit, err := strconv.Atoi(c.GetHeader("X-Download-Limit"))
 	if err != nil {
@@ -51,9 +54,9 @@ func UploadHandler(c *gin.Context) {
 			"message": "folder id generation error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
-	// TODO: Check if FolderHash already exists in database
 	isExist, err := database.Engine.Exist(&database.FileTracking{FolderHash: FolderHash})
 
 	if err != nil {
@@ -77,11 +80,9 @@ func UploadHandler(c *gin.Context) {
 			return
 		}
 		c.JSON(500, gin.H{
-			"message":     "Duplicate entries with matching file names and contents have already been uploaded.",
-			"folderId":    FileTracking.FolderId,
-			"isEncrypted": FileTracking.IsEncrypted,
-			"uploadDate":  FileTracking.UploadDate.Format(time.RFC3339),
-			// "token":         token,
+			"message":       "Duplicate entries with matching file names and contents have already been uploaded.",
+			"folderId":      FileTracking.FolderId,
+			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
 			"downloadLimit": FileTracking.DownloadLimit,
 			"downloadCount": FileTracking.DownloadCount,
 			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
@@ -93,37 +94,19 @@ func UploadHandler(c *gin.Context) {
 	FileTracking := &database.FileTracking{
 		FileCount:     len(form.File["file"]),
 		FolderId:      FolderHash[:5],
+		IsHidden:      isHidden,
 		FolderHash:    FolderHash,
 		UploadDate:    time.Now(),
-		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate,
 	}
-
-	// var token string = ""
-	// if FileTracking.IsEncrypted {
-	// 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	// 	if err != nil {
-	// 		c.JSON(500, gin.H{
-	// 			"message": "bcrypt hash error",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	}
-	// 	FileTracking.Password = string(hash)
-	// 	token, _, err = jwt.CreateJWTToken(*FileTracking)
-	// 	if err != nil {
-	// 		c.JSON(500, gin.H{
-	// 			"message": "jwt token creation error",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	}
-	// }
 
 	if CheckFileFolder(FileTracking.FolderId) != nil {
 		c.JSON(500, gin.H{
 			"message": "file folder creation error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	for _, file := range form.File["file"] {
@@ -132,6 +115,7 @@ func UploadHandler(c *gin.Context) {
 				"message": "file save error",
 				"error":   err.Error(),
 			})
+			return
 		}
 	}
 
@@ -141,16 +125,15 @@ func UploadHandler(c *gin.Context) {
 			"message": "database insert error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	log.Printf("Successfully uploaded %s, download limit %d\n", FileTracking.FolderId, FileTracking.DownloadLimit)
 
 	c.JSON(200, gin.H{
-		"message":     "File uploaded successfully",
-		"folderId":    FileTracking.FolderId,
-		"isEncrypted": FileTracking.IsEncrypted,
-		"uploadDate":  FileTracking.UploadDate.Format(time.RFC3339),
-		// "token":         token,
+		"message":       "File uploaded successfully",
+		"folderId":      FileTracking.FolderId,
+		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
 		"downloadLimit": FileTracking.DownloadLimit,
 		"downloadCount": FileTracking.DownloadCount,
 		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),

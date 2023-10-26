@@ -15,6 +15,7 @@ func FileHandler(c *gin.Context) {
 			"message": "Please provide a file id",
 			"error":   nil,
 		})
+		return
 	}
 
 	FileTracking := database.FileTracking{
@@ -28,6 +29,7 @@ func FileHandler(c *gin.Context) {
 			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	if !has {
@@ -35,6 +37,7 @@ func FileHandler(c *gin.Context) {
 			"message": "file not found",
 			"error":   nil,
 		})
+		return
 	}
 
 	baseUrl := c.Request.Host
@@ -44,14 +47,13 @@ func FileHandler(c *gin.Context) {
 			"message": "folder not found",
 			"error":   nil,
 		})
+		return
 	} else {
 		c.JSON(200, gin.H{
 			"message":       "file found",
-			"isEncrypted":   FileTracking.IsEncrypted,
 			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
 			"files":         files,
 			"folderId":      FileTracking.FolderId,
-			"provideToken":  c.Query("token") != "",
 			"downloadLimit": FileTracking.DownloadLimit,
 			"downloadCount": FileTracking.DownloadCount,
 			"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),

@@ -13,18 +13,18 @@ import (
 )
 
 type FileTracking struct {
-	Id            int64     `json:"-"`
-	FolderHash    string    `json:"-"`
+	Id         int64  `json:"-"`
+	FolderHash string `json:"-"`
+	IsHidden   bool   `json:"-"`
+	IsDeleted  bool   `json:"-"`
+
 	FolderId      string    `json:"folderId"`
 	FolderSize    int64     `json:"folderSize"`
 	FileCount     int       `json:"fileCount"`
-	UploadDate    time.Time `json:"uploadDate"`
-	IsEncrypted   bool      `json:"isEncrypted"`
-	Password      string    `json:"-"`
 	DownloadCount int64     `json:"downloadCount"`
 	DownloadLimit int64     `json:"downloadLimit"`
+	UploadDate    time.Time `json:"uploadDate"`
 	ExpireTime    time.Time `json:"expireTime"`
-	IsDeleted     bool      `json:"-"`
 }
 
 var Engine *xorm.Engine
