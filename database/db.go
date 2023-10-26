@@ -14,6 +14,7 @@ import (
 
 type FileTracking struct {
 	Id            int64     `json:"-"`
+	FolderHash    string    `json:"-"`
 	FolderId      string    `json:"folderId"`
 	FolderSize    int64     `json:"folderSize"`
 	FileCount     int       `json:"fileCount"`

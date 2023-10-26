@@ -5,16 +5,13 @@ import (
 	"log"
 	"math"
 	"os"
-	"strings"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	limits "github.com/gin-contrib/size"
+
+	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 	"github.com/tempfiles-Team/tempfiles-backend/file"
-	"github.com/tempfiles-Team/tempfiles-backend/jwt"
-
-	jwtware "github.com/gofiber/jwt/v3"
 )
 
 type LoginRequest struct {
@@ -23,18 +20,15 @@ type LoginRequest struct {
 }
 
 func main() {
+	app := gin.Default()
+	app.Use(limits.RequestSizeLimiter(int64(math.Pow(1024, 3)))) // 1 == 1byte, = 1GB
 
-	app := fiber.New(fiber.Config{
-		AppName:   "tempfiles-backend",
-		BodyLimit: int(math.Pow(1024, 3)), // 1 == 1byte, = 1GB
-	})
-
-	app.Use(
-		cors.New(cors.Config{
-			AllowOrigins: "*",
-			AllowHeaders: "Origin, Content-Type, Accept, X-Download-Limit, X-Time-Limit",
-			AllowMethods: "GET, POST, DELETE",
-		}))
+	// app.Use(
+	// 	cors.New(cors.Config{
+	// 		AllowOrigins: "*",
+	// 		AllowHeaders: "Origin, Content-Type, Accept, X-Download-Limit, X-Time-Limit",
+	// 		AllowMethods: "GET, POST, DELETE",
+	// 	}))
 
 	// terminator := cron.New()
 	// terminator.AddFunc("* */1 * * *", func() {
@@ -83,58 +77,59 @@ func main() {
 		log.Fatalf("failed to create db engine: %v", err)
 	}
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
+	app.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
 			"message": "api is working normally :)",
 		})
 	})
 
-	app.Get("/info", func(c *fiber.Ctx) error {
-		apiName := c.Query("api", "")
-		backendUrl := c.BaseURL()
+	app.GET("/info", func(c *gin.Context) {
+		apiName := c.Query("api")
+		backendUrl := c.Request.Host
 		switch apiName {
 		case "upload":
-			return c.JSON(fiber.Map{
+			c.JSON(200, gin.H{
 				"apiName": "/upload",
 				"method":  "POST",
 				"desc":    "특정 파일을 서버에 업로드합니다.",
 				"command": "curl -X POST -F 'file=@[filepath or filename]' " + backendUrl + "/upload",
 			})
 		case "list":
-			return c.JSON(fiber.Map{
+			c.JSON(200, gin.H{
 				"apiName": "/list",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
 				"command": "curl " + backendUrl + "/list",
 			})
 		case "file":
-			return c.JSON(fiber.Map{
+			c.JSON(200, gin.H{
 				"apiName": "/file/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
 				"command": "curl " + backendUrl + "/file/[file_id]",
 			})
 		case "del":
-			return c.JSON(fiber.Map{
+			c.JSON(200, gin.H{
 				"apiName": "/del/[file_id]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
 				"command": "curl -X DELETE " + backendUrl + "/del/[file_id]",
 			})
 		case "dl":
-			return c.JSON(fiber.Map{
+			c.JSON(200, gin.H{
 				"apiName": "/dl/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
 				"command": "curl -O " + backendUrl + "/dl/[file_id]",
 			})
-		case "":
-			return c.JSON([]fiber.Map{
+		default:
+			c.JSON(200, []gin.H{
 				{
 					"apiUrl":     backendUrl + "/upload",
 					"apiHandler": "upload",
 				},
 				{
+
 					"apiUrl":     backendUrl + "/list",
 					"apiHandler": "list",
 				},
@@ -151,88 +146,83 @@ func main() {
 					"apiHandler": "dl",
 				},
 			})
-		default:
-			return c.JSON(fiber.Map{
-				"message": "invalid api name",
-			})
-
 		}
 	})
 
-	app.Get("/list", file.ListHandler)
-	app.Post("/upload", file.UploadHandler)
+	app.GET("/list", file.ListHandler)
+	app.POST("/upload", file.UploadHandler)
 
-	app.Use(func(c *fiber.Ctx) error {
-		if len(strings.Split(c.OriginalURL(), "/")) != 3 {
-			// TODO: FIX THIS PART
-			if strings.Contains(c.OriginalURL(), "/dl/") {
-				return c.Next()
-			}
+	// app.Use(func(c *gin.Context) error {
+	// 	if len(strings.Split(c.OriginalURL(), "/")) != 3 {
+	// 		// TODO: FIX THIS PART
+	// 		if strings.Contains(c.OriginalURL(), "/dl/") {
+	// 			return c.Next()
+	// 		}
 
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "invalid url",
-			})
-		}
+	// 		return c.Status(fiber.StatusBadRequest).JSON(gin.H{
+	// 			"message": "invalid url",
+	// 		})
+	// 	}
 
-		id := strings.Split(c.OriginalURL(), "/")[2]
-		if strings.Contains(id, "?") {
-			id = strings.Split(id, "?")[0]
-		}
+	// 	id := strings.Split(c.OriginalURL(), "/")[2]
+	// 	if strings.Contains(id, "?") {
+	// 		id = strings.Split(id, "?")[0]
+	// 	}
 
-		log.Printf("id: %v", id)
+	// 	log.Printf("id: %v", id)
 
-		file := database.FileTracking{FolderId: id}
-		database.Engine.Get(&file)
-		if file.IsDeleted {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "file is deleted",
-			})
-		}
-		return c.Next()
-	})
+	// 	file := database.FileTracking{FolderId: id}
+	// 	database.Engine.GET(&file)
+	// 	if file.IsDeleted {
+	// 		c.JSON(404, gin.H{
+	// 			"message": "file is deleted",
+	// 		})
+	// 	}
+	// 	return c.Next()
+	// })
 
-	app.Get("/file/:id", file.FileHandler)
-	app.Get("/checkpw/:id", file.CheckPasswordHandler)
+	// app.GET("/file/:id", file.FileHandler)
+	// app.GET("/checkpw/:id", file.CheckPasswordHandler)
 
-	app.Use(jwtware.New(jwtware.Config{
-		TokenLookup: "query:token",
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"message": "file is password protected / Unauthorized",
-				"error":   err.Error(),
-			})
-		},
+	// app.Use(jwtware.New(jwtware.Config{
+	// 	TokenLookup: "query:token",
+	// 	ErrorHandler: func(c *gin.Context, err error) error {
+	// 		return c.Status(fiber.StatusUnauthorized).JSON(gin.H{
+	// 			"message": "file is password protected / Unauthorized",
+	// 			"error":   err.Error(),
+	// 		})
+	// 	},
 
-		Filter: func(c *fiber.Ctx) bool {
-			//id or filename이 없으면 jwt 검사 안함
+	// 	Filter: func(c *gin.Context) bool {
+	// 		//id or filename이 없으면 jwt 검사 안함
 
-			// TODO: FIX THIS PART
+	// 		// TODO: FIX THIS PART
 
-			if len(strings.Split(c.OriginalURL(), "/")) != 3 && !strings.Contains(c.OriginalURL(), "/dl/") {
-				// 핸들러가 알아서 에러를 반환함
-				return false
-			}
+	// 		if len(strings.Split(c.OriginalURL(), "/")) != 3 && !strings.Contains(c.OriginalURL(), "/dl/") {
+	// 			// 핸들러가 알아서 에러를 반환함
+	// 			return false
+	// 		}
 
-			id := strings.Split(c.OriginalURL(), "/")[2]
-			if strings.Contains(id, "?") {
-				id = strings.Split(id, "?")[0]
-			}
+	// 		id := strings.Split(c.OriginalURL(), "/")[2]
+	// 		if strings.Contains(id, "?") {
+	// 			id = strings.Split(id, "?")[0]
+	// 		}
 
-			jwt.FolderId = id
+	// 		jwt.FolderId = id
 
-			return jwt.IsEncrypted(id)
-		},
-		KeyFunc: jwt.IsMatched(),
-	}))
+	// 		return jwt.IsEncrypted(id)
+	// 	},
+	// 	KeyFunc: jwt.IsMatched(),
+	// }))
 
-	app.Get("/dl/:id/:name", file.DownloadHandler)
-	app.Delete("/del/:id", file.DeleteHandler)
+	// app.GET("/dl/:id/:name", file.DownloadHandler)
+	// app.Delete("/del/:id", file.DeleteHandler)
 
 	if os.Getenv("BACKEND_PORT") == "" {
 		os.Setenv("BACKEND_PORT", "5000")
 	}
 
-	log.Fatal(app.Listen(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
+	log.Fatal(app.Run(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
 	// terminator.Stop()
 }

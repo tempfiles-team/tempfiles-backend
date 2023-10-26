@@ -5,22 +5,22 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
-func DownloadHandler(c *fiber.Ctx) error {
-	id := c.Params("id")
-	name, err := url.PathUnescape(c.Params("name"))
+func DownloadHandler(c *gin.Context) {
+	id := c.Param("id")
+	name, err := url.PathUnescape(c.Param("name"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(400, gin.H{
 			"message": "invalid file name",
 			"error":   err.Error(),
 		})
 	}
 
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(400, gin.H{
 			"message":  "Please provide a file id",
 			"error":    nil,
 			"download": false,
@@ -34,21 +34,21 @@ func DownloadHandler(c *fiber.Ctx) error {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		c.JSON(500, gin.H{
 			"message": "db query error",
 			"error":   err.Error(),
 		})
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		c.JSON(404, gin.H{
 			"message": "folder not found",
 			"error":   nil,
 		})
 	}
 
 	if !CheckIsFileExist(FileTracking.FolderId, name) {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		c.JSON(404, gin.H{
 			"message": "file not found!!",
 			"error":   nil,
 		})
@@ -57,7 +57,7 @@ func DownloadHandler(c *fiber.Ctx) error {
 	// db DownloadCount +1
 	FileTracking.DownloadCount++
 	if _, err := database.Engine.ID(FileTracking.Id).Update(&FileTracking); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		c.JSON(500, gin.H{
 			"message": "db update error",
 			"error":   err.Error(),
 		})
@@ -70,13 +70,13 @@ func DownloadHandler(c *fiber.Ctx) error {
 
 		log.Printf("check IsDeleted file: %s \n", FileTracking.FolderId)
 		if _, err := database.Engine.ID(FileTracking.Id).Cols("Is_deleted").Update(&FileTracking); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			c.JSON(500, gin.H{
 				"message": "db update error",
 				"error":   err.Error(),
 			})
 		}
 	}
 
-	c.Response().Header.Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(name), "+", "%20"))
-	return c.SendFile("tmp/" + FileTracking.FolderId + "/" + name)
+	c.Header("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(name), "+", "%20"))
+	c.File("tmp/" + FileTracking.FolderId + "/" + name)
 }

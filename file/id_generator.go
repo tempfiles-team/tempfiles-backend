@@ -1,4 +1,4 @@
-package database
+package file
 
 import (
 	"bytes"
@@ -27,6 +27,8 @@ func GenerateFolderId(files []*multipart.FileHeader) (string, error) {
 		buf.ReadFrom(fileData)
 		fileBytes := buf.Bytes()
 
+		nameHash := sha1.Sum([]byte(file.Filename))
+		hashes = append(hashes, nameHash[:])
 		fileHash := sha1.Sum(fileBytes)
 		hashes = append(hashes, fileHash[:])
 	}
