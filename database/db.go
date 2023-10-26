@@ -48,7 +48,5 @@ func CreateDBEngine() error {
 		return err
 	}
 
-	randInit()
-
 	return nil
 }

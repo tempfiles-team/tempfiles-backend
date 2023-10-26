@@ -37,9 +37,20 @@ func UploadHandler(c *fiber.Ctx) error {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
 
+	folderId, err := database.GenerateFolderId(form.File["file"])
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "folder id generation error",
+			"error":   err.Error(),
+		})
+	}
+
+	// TODO: Check if folderId already exists in database
+
 	FileTracking := &database.FileTracking{
 		FileCount:     len(form.File["file"]),
-		FolderId:      database.RandString(),
+		FolderId:      folderId[:5],
 		UploadDate:    time.Now(),
 		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),

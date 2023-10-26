@@ -1,20 +1,37 @@
 package database
 
 import (
-	"math/rand"
-	"time"
+	"bytes"
+	"crypto/sha1"
+	"encoding/base64"
+	"mime/multipart"
+	"sort"
 )
 
-func randInit() {
-	rand.Seed(time.Now().UnixNano())
-}
+func GenerateFolderId(files []*multipart.FileHeader) (string, error) {
 
-var charsets = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Filename < files[j].Filename
+	})
 
-func RandString() string {
-	b := make([]rune, 5)
-	for i := range b {
-		b[i] = charsets[rand.Intn(len(charsets))]
+	var hashes [][]byte
+
+	for _, file := range files {
+		fileData, err := file.Open()
+		if err != nil {
+			return "", err
+		}
+		defer fileData.Close()
+
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(fileData)
+		fileBytes := buf.Bytes()
+
+		fileHash := sha1.Sum(fileBytes)
+		hashes = append(hashes, fileHash[:])
 	}
-	return string(b)
+
+	combinedHash := sha1.Sum(bytes.Join(hashes, nil))
+
+	return base64.StdEncoding.EncodeToString(combinedHash[:]), nil
 }
