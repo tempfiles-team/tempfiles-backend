@@ -122,7 +122,7 @@ func UploadHandler(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Successfully uploaded %s, download limit %d\n", FileTracking.FolderId, FileTracking.DownloadLimit)
+	log.Printf("🥰  Successfully uploaded %s, %d files\n", FileTracking.FolderId, FileTracking.FileCount)
 
 	// TODO: Add message to response
 	c.JSON(200, FileTracking)

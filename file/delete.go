@@ -1,6 +1,7 @@
 package file
 
 import (
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +58,8 @@ func DeleteHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	log.Printf("🗑️  Delete this folder: %s\n", FileTracking.FolderId)
 
 	c.JSON(200, gin.H{
 		"message": "File deleted successfully",

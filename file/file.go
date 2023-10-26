@@ -1,6 +1,8 @@
 package file
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
@@ -47,6 +49,7 @@ func FileHandler(c *gin.Context) {
 		})
 		return
 	} else {
+		log.Println("✨  File found: ", FileTracking.FolderId)
 		c.JSON(200, new(FileResponse).NewFileResponse(FileTracking, files, "file found", baseUrl))
 	}
 }

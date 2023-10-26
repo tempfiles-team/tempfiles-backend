@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
@@ -69,12 +70,11 @@ func DownloadHandler(c *gin.Context) {
 		return
 	}
 
-	// Download Limit check
-	if FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit {
-		// Download Limit exceeded -> check IsDelete
+	if (FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit) || !FileTracking.ExpireTime.Before(time.Now()) || FileTracking.IsDeleted {
+
 		FileTracking.IsDeleted = true
 
-		log.Printf("check IsDeleted file: %s \n", FileTracking.FolderId)
+		log.Printf("🗑️  Set this folder for deletion: %s \n", FileTracking.FolderId)
 		if _, err := database.Engine.ID(FileTracking.Id).Cols("Is_deleted").Update(&FileTracking); err != nil {
 			c.JSON(500, gin.H{
 				"message": "db update error",
@@ -82,7 +82,14 @@ func DownloadHandler(c *gin.Context) {
 			})
 			return
 		}
+
+		c.JSON(404, gin.H{
+			"message": "file not found",
+		})
+		return
 	}
+
+	log.Printf("📥️  Successfully downloaded %s, %s\n", FileTracking.FolderId, name)
 
 	c.Header("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(name), "+", "%20"))
 	c.File("tmp/" + FileTracking.FolderId + "/" + name)
