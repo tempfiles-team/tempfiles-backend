@@ -1,24 +1,24 @@
 package file
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
-func ListHandler(c *fiber.Ctx) error {
+func ListHandler(c *gin.Context) {
 
 	var files []database.FileTracking
-	// IsDeleted가 false인 파일만 가져옴
-	if err := database.Engine.Where("is_deleted = ?", false).Find(&files); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "file list error",
+
+	if err := database.Engine.Where("is_deleted = ? AND is_hidden = ?", false, false).Find(&files); err != nil {
+		c.JSON(500, gin.H{
+			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":      "File list successfully",
-		"list":         files,
-		"numberOfList": len(files),
+	c.JSON(200, gin.H{
+		"message": "File list successfully",
+		"list":    files,
 	})
 }

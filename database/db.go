@@ -13,17 +13,17 @@ import (
 )
 
 type FileTracking struct {
-	Id            int64     `json:"-"`
-	FileId        string    `json:"fileId"`
-	FileName      string    `json:"filename"`
-	FileSize      int64     `json:"size"`
-	UploadDate    time.Time `json:"uploadDate"`
-	IsEncrypted   bool      `json:"isEncrypted"`
-	Password      string    `json:"-"`
+	Id         int64  `json:"-"`
+	FolderHash string `json:"-"`
+	IsDeleted  bool   `json:"-"`
+
+	IsHidden      bool      `json:"isHidden"`
+	FolderId      string    `json:"folderId"`
+	FileCount     int       `json:"fileCount"`
 	DownloadCount int64     `json:"downloadCount"`
 	DownloadLimit int64     `json:"downloadLimit"`
+	UploadDate    time.Time `json:"uploadDate"`
 	ExpireTime    time.Time `json:"expireTime"`
-	IsDeleted     bool      `json:"-"`
 }
 
 var Engine *xorm.Engine
@@ -47,8 +47,6 @@ func CreateDBEngine() error {
 	if err := Engine.Sync(new(FileTracking)); err != nil {
 		return err
 	}
-
-	randInit()
 
 	return nil
 }

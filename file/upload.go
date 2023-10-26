@@ -6,99 +6,124 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
-	"github.com/tempfiles-Team/tempfiles-backend/jwt"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func UploadHandler(c *fiber.Ctx) error {
-	data, err := c.FormFile("file")
+func UploadHandler(c *gin.Context) {
+
+	form, err := c.MultipartForm()
+
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Please upload a file (multipart/form-data)",
-			"error":   err.Error(),
+		c.JSON(400, gin.H{
+			"error": err.Error(),
 		})
+		return
 	}
 
-	password := c.Query("pw", "")
+	if form == nil || len(form.File["file"]) == 0 {
+		c.JSON(400, gin.H{
+			"error": "Please send the file using the “file” field in multipart/form-data.",
+		})
+		return
+	}
 
-	downloadLimit, err := strconv.Atoi(string(c.Request().Header.Peek("X-Download-Limit")))
+	isHidden, err := strconv.ParseBool(c.GetHeader("X-Hidden"))
 	if err != nil {
-		downloadLimit = 0
+		isHidden = false
 	}
-	expireTime, err := strconv.Atoi(string(c.Request().Header.Peek("X-Time-Limit")))
+
+	downloadLimit, err := strconv.Atoi(c.GetHeader("X-Download-Limit"))
+	if err != nil {
+		downloadLimit = 100
+	}
+	expireTime, err := strconv.Atoi(c.GetHeader("X-Time-Limit"))
+
 	var expireTimeDate time.Time
-	if err != nil || expireTime < 0 || expireTime == 0 {
-		// 기본 3시간 후 만료
+
+	if err != nil || expireTime <= 0 {
 		expireTimeDate = time.Now().Add(time.Duration(60*3) * time.Minute)
 	} else {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)
 	}
 
+	FolderHash, err := GenerateFolderId(form.File["file"])
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"message": "folder id generation error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	isExist, err := database.Engine.Exist(&database.FileTracking{FolderHash: FolderHash})
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"message": "database exist error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if isExist {
+		FileTracking := database.FileTracking{
+			FolderHash: FolderHash,
+		}
+		_, err := database.Engine.Get(&FileTracking)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "database get error",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		// TODO: Add message to response
+		c.JSON(200, FileTracking)
+		return
+	}
+
 	FileTracking := &database.FileTracking{
-		FileName:      data.Filename,
-		FileSize:      data.Size,
+		FileCount:     len(form.File["file"]),
+		FolderId:      FolderHash[:5],
+		IsHidden:      isHidden,
+		FolderHash:    FolderHash,
 		UploadDate:    time.Now(),
-		FileId:        database.RandString(),
-		IsEncrypted:   password != "",
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate,
 	}
 
-	var token string = ""
-	if FileTracking.IsEncrypted {
-		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "bcrypt hash error",
-				"error":   err.Error(),
-			})
-		}
-		FileTracking.Password = string(hash)
-		token, _, err = jwt.CreateJWTToken(*FileTracking)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "jwt token creation error",
-				"error":   err.Error(),
-			})
-		}
-	}
-
-	if CheckFileFolder(FileTracking.FileId) != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	if CheckFileFolder(FileTracking.FolderId) != nil {
+		c.JSON(500, gin.H{
 			"message": "file folder creation error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
-	if err := c.SaveFile(data, fmt.Sprintf("tmp/%s/%s", FileTracking.FileId, FileTracking.FileName)); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "file save error",
-			"error":   err.Error(),
-		})
+	for _, file := range form.File["file"] {
+		if err := c.SaveUploadedFile(file, fmt.Sprintf("tmp/%s/%s", FileTracking.FolderId, file.Filename)); err != nil {
+			c.JSON(500, gin.H{
+				"message": "file save error",
+				"error":   err.Error(),
+			})
+			return
+		}
 	}
 
 	_, err = database.Engine.Insert(FileTracking)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		c.JSON(500, gin.H{
 			"message": "database insert error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
-	log.Printf("Successfully uploaded %s of size %d, download limit %d\n", FileTracking.FileName, FileTracking.FileSize, FileTracking.DownloadLimit)
+	log.Printf("🥰  Successfully uploaded %s, %d files\n", FileTracking.FolderId, FileTracking.FileCount)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "File uploaded successfully",
-		"fileId":        FileTracking.FileId,
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
-		"isEncrypted":   FileTracking.IsEncrypted,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"token":         token,
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-	})
+	// TODO: Add message to response
+	c.JSON(200, FileTracking)
 }

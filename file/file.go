@@ -1,56 +1,55 @@
 package file
 
 import (
-	"fmt"
-	"time"
+	"log"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
 )
 
-func FileHandler(c *fiber.Ctx) error {
-	id := c.Params("id")
+func FileHandler(c *gin.Context) {
+	id := c.Param("id")
 
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(400, gin.H{
 			"message": "Please provide a file id",
 			"error":   nil,
 		})
+		return
 	}
 
 	FileTracking := database.FileTracking{
-		FileId: id,
+		FolderId: id,
 	}
 
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		c.JSON(500, gin.H{
 			"message": "db query error",
 			"error":   err.Error(),
 		})
+		return
 	}
 
 	if !has {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		c.JSON(404, gin.H{
 			"message": "file not found",
 			"error":   nil,
 		})
+		return
 	}
 
-	backendUrl := c.BaseURL()
+	baseUrl := c.Request.Host
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "file found",
-		"filename":      FileTracking.FileName,
-		"size":          FileTracking.FileSize,
-		"isEncrypted":   FileTracking.IsEncrypted,
-		"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
-		"delete_url":    fmt.Sprintf("%s/del/%s", backendUrl, FileTracking.FileId),
-		"download_url":  fmt.Sprintf("%s/dl/%s", backendUrl, FileTracking.FileId),
-		"provide_token": c.Query("token") != "",
-		"downloadLimit": FileTracking.DownloadLimit,
-		"downloadCount": FileTracking.DownloadCount,
-		"expireTime":    FileTracking.ExpireTime.Format(time.RFC3339),
-	})
+	if files, err := GetFiles(FileTracking.FolderId, baseUrl); err != nil {
+		c.JSON(500, gin.H{
+			"message": "folder not found",
+			"error":   nil,
+		})
+		return
+	} else {
+		log.Println("✨  File found: ", FileTracking.FolderId)
+		c.JSON(200, new(FileResponse).NewFileResponse(FileTracking, files, "file found", baseUrl))
+	}
 }
