@@ -79,7 +79,7 @@ func UploadHandler(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(500, gin.H{
+		c.JSON(200, gin.H{
 			"message":       "Duplicate entries with matching file names and contents have already been uploaded.",
 			"folderId":      FileTracking.FolderId,
 			"uploadDate":    FileTracking.UploadDate.Format(time.RFC3339),
