@@ -37,11 +37,11 @@ func UploadHandler(c *gin.Context) {
 	if err != nil {
 		downloadLimit = 100
 	}
-	expireTime, err := strconv.Atoi(string(c.GetHeader("X-Time-Limit")))
+	expireTime, err := strconv.Atoi(c.GetHeader("X-Time-Limit"))
 
 	var expireTimeDate time.Time
-	if err != nil || expireTime < 0 || expireTime == 0 {
-		// 기본 3시간 후 만료
+
+	if err != nil || expireTime <= 0 {
 		expireTimeDate = time.Now().Add(time.Duration(60*3) * time.Minute)
 	} else {
 		expireTimeDate = time.Now().Add(time.Duration(expireTime) * time.Minute)

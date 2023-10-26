@@ -5,9 +5,11 @@ import (
 	"log"
 	"math"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	limits "github.com/gin-contrib/size"
+	"github.com/robfig/cron"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -25,42 +27,41 @@ func main() {
 	config.AllowMethods = []string{"GET", "POST", "DELETE"}
 	app.Use(cors.New(config))
 
-	// terminator := cron.New()
-	// terminator.AddFunc("* */1 * * *", func() {
-	// 	var files []database.FileTracking
-	// 	//현재 시간보다 expire_time이 작고 is_deleted가 false인 파일을 가져옴
-	// 	if err := database.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files); err != nil {
-	// 		log.Println("cron db query error", err.Error())
-	// 	}
-	// 	for _, file := range files {
-	// 		log.Printf("check IsDeleted file: %s \n", file.FolderId)
-	// 		//is_deleted를 true로 바꿔줌
-	// 		file.IsDeleted = true
-	// 		if _, err := database.Engine.ID(file.Id).Cols("Is_deleted").Update(&file); err != nil {
-	// 			log.Printf("cron db update error, file: %s, error: %s\n", file.FolderId, err.Error())
-	// 		}
-	// 	}
-	// })
+	terminator := cron.New()
 
-	// // terminator.AddFunc("@daily", func() {
-	// terminator.AddFunc("* */5 * * *", func() {
-	// 	var files []database.FileTracking
-	// 	// IsDeleted가 false인 파일만 가져옴
-	// 	if err := database.Engine.Where("is_deleted = ?", true).Find(&files); err != nil {
-	// 		log.Println("file list error: ", err.Error())
-	// 	}
-	// 	for _, file := range files {
-	// 		log.Printf("delete file: %s\n", file.FolderId)
-	// 		if err := os.RemoveAll("./tmp/" + file.FolderId); err != nil {
-	// 			log.Println("delete file error: ", err.Error())
-	// 		}
-	// 		if _, err := database.Engine.Delete(&file); err != nil {
-	// 			log.Println("delete file error: ", err.Error())
-	// 		}
-	// 	}
-	// })
+	terminator.AddFunc("1 */5 * * *", func() {
+		log.Println("⏲️  Check for expired files", time.Now().Format("2006-01-02 15:04:05"))
+		var files []database.FileTracking
+		if err := database.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files); err != nil {
+			log.Println("cron db query error", err.Error())
+		}
+		for _, file := range files {
+			log.Printf("🗑️  Set this folder for deletion: %s \n", file.FolderId)
+			file.IsDeleted = true
+			if _, err := database.Engine.ID(file.Id).Cols("Is_deleted").Update(&file); err != nil {
+				log.Printf("cron db update error, file: %s, error: %s\n", file.FolderId, err.Error())
+			}
+		}
+	})
 
-	// terminator.Start()
+	terminator.AddFunc("1 */20 * * *", func() {
+		log.Println("⏲️  Check which files need to be deleted", time.Now().Format("2006-01-02 15:04:05"))
+		var files []database.FileTracking
+		if err := database.Engine.Where("is_deleted = ?", true).Find(&files); err != nil {
+			log.Println("file list error: ", err.Error())
+		}
+		for _, file := range files {
+			log.Printf("🗑️  Delete this folder: %s\n", file.FolderId)
+			if err := os.RemoveAll("./tmp/" + file.FolderId); err != nil {
+				log.Println("delete file error: ", err.Error())
+			}
+			if _, err := database.Engine.Delete(&file); err != nil {
+				log.Println("delete file error: ", err.Error())
+			}
+		}
+	})
+
+	terminator.Start()
 
 	var err error
 
@@ -147,8 +148,6 @@ func main() {
 	app.GET("/list", file.ListHandler)
 	app.POST("/upload", file.UploadHandler)
 
-	// TODO: check id is valid (check is not delete)
-
 	app.GET("/file/:id", file.FileHandler)
 
 	app.GET("/dl/:id/:name", file.DownloadHandler)
@@ -160,5 +159,5 @@ func main() {
 
 	log.Fatal(app.Run(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
-	// terminator.Stop()
+	terminator.Stop()
 }
