@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
@@ -70,7 +69,7 @@ func DownloadHandler(c *gin.Context) {
 		return
 	}
 
-	if (FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit) || !FileTracking.ExpireTime.Before(time.Now()) || FileTracking.IsDeleted {
+	if FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit {
 
 		FileTracking.IsDeleted = true
 
@@ -82,11 +81,6 @@ func DownloadHandler(c *gin.Context) {
 			})
 			return
 		}
-
-		c.JSON(404, gin.H{
-			"message": "file not found",
-		})
-		return
 	}
 
 	log.Printf("📥️  Successfully downloaded %s, %s\n", FileTracking.FolderId, name)

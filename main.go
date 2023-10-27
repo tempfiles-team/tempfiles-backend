@@ -88,35 +88,35 @@ func main() {
 				"apiName": "/upload",
 				"method":  "POST",
 				"desc":    "특정 파일을 서버에 업로드합니다.",
-				"command": "curl -X POST -F 'file=@[filepath or filename]' " + backendUrl + "/upload",
+				"command": "curl -LX POST -F 'file=@[filepath or filename]' " + backendUrl + "/upload",
 			})
 		case "list":
 			c.JSON(200, gin.H{
 				"apiName": "/list",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
-				"command": "curl " + backendUrl + "/list",
+				"command": "curl -L " + backendUrl + "/list",
 			})
 		case "file":
 			c.JSON(200, gin.H{
 				"apiName": "/file/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
-				"command": "curl " + backendUrl + "/file/[file_id]",
+				"command": "curl -L " + backendUrl + "/file/[file_id]",
 			})
 		case "del":
 			c.JSON(200, gin.H{
 				"apiName": "/del/[file_id]",
 				"method":  "DELETE",
 				"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
-				"command": "curl -X DELETE " + backendUrl + "/del/[file_id]",
+				"command": "curl -LX DELETE " + backendUrl + "/del/[file_id]",
 			})
 		case "dl":
 			c.JSON(200, gin.H{
 				"apiName": "/dl/[file_id]",
 				"method":  "GET",
 				"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
-				"command": "curl -O " + backendUrl + "/dl/[file_id]",
+				"command": "curl -LO " + backendUrl + "/dl/[file_id]",
 			})
 		default:
 			c.JSON(200, []gin.H{

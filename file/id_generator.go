@@ -35,5 +35,5 @@ func GenerateFolderId(files []*multipart.FileHeader) (string, error) {
 
 	combinedHash := sha1.Sum(bytes.Join(hashes, nil))
 
-	return base64.StdEncoding.EncodeToString(combinedHash[:]), nil
+	return base64.RawURLEncoding.EncodeToString(combinedHash[:]), nil
 }
