@@ -40,7 +40,12 @@ func FileHandler(c *gin.Context) {
 		return
 	}
 
-	baseUrl := c.Request.Host
+	scheme := "http"
+	if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+
+	baseUrl := scheme + "://" + c.Request.Host
 
 	if files, err := GetFiles(FileTracking.FolderId, baseUrl); err != nil {
 		c.JSON(500, gin.H{

@@ -41,6 +41,11 @@ func CreateDBEngine() error {
 	if err != nil {
 		return err
 	}
+
+	Engine.SetMaxIdleConns(20)
+	Engine.SetMaxOpenConns(20)
+	Engine.SetConnMaxLifetime(time.Minute * 5)
+
 	if err := Engine.Ping(); err != nil {
 		return err
 	}
