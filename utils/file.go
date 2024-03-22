@@ -36,22 +36,20 @@ func GetFiles(folderId, baseUrl string) ([]file.FileListResponse, error) {
 
 }
 
-func SaveFile(folderId, fileName string, file *multipart.File) error {
+func SaveFile(folderId, fileName string, file multipart.File) error {
+	// tmpf/debug/filename write
+	os.MkdirAll("tmp/"+folderId, os.ModePerm)
+	tmpf, err := os.Create("tmp/" + folderId + "/" + fileName)
 
-	// Create a new file
-	newFile, err := os.Create("tmp/" + folderId + "/" + fileName)
 	if err != nil {
 		return err
-
 	}
 
-	defer newFile.Close()
+	defer tmpf.Close()
 
-	// Copy the file to the new file
-	_, err = io.Copy(newFile, *file)
+	_, err = io.Copy(tmpf, file)
 	if err != nil {
 		return err
-
 	}
 
 	return nil

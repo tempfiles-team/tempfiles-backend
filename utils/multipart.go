@@ -47,6 +47,7 @@ func FormFiles(r *http.Request, key string) ([]MultiFileAndHeader, error) {
 				if err != nil {
 					return nil, err
 				}
+
 				files = append(files, MultiFileAndHeader{
 					File:   f,
 					Header: fh,
@@ -71,7 +72,7 @@ func GenIdFormMulitpart(MFAH []MultiFileAndHeader) (string, error) {
 
 	for _, file := range MFAH {
 
-		defer file.File.Close()
+		// defer file.File.Close()
 
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(file.File)

@@ -162,14 +162,14 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 	}
 
 	// Multipart File And Header
-	MFAH, err := utils.FormFiles(c.Request(), "file")
+	MFAHASH, err := utils.FormFiles(c.Request(), "file")
 	if err != nil {
 		return Files{
 			Message: fmt.Sprintf("Please send the file using the “file” field in multipart/form-data.: %v", err),
 		}, nil
 	}
 
-	FolderHash, err := utils.GenIdFormMulitpart(MFAH)
+	FolderHash, err := utils.GenIdFormMulitpart(MFAHASH)
 	if err != nil {
 		return Files{
 			Message: fmt.Sprintf("folder id generation error: %v", err),
@@ -204,6 +204,13 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 		}, nil
 	}
 
+	MFAH, err := utils.FormFiles(c.Request(), "file")
+	if err != nil {
+		return Files{
+			Message: fmt.Sprintf("Please send the file using the “file” field in multipart/form-data.: %v", err),
+		}, nil
+	}
+
 	FileTracking := &database.FileTracking{
 		FileCount:     len(MFAH),
 		FolderId:      FolderHash[:5],
@@ -225,7 +232,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 
 	for _, file := range MFAH {
 
-		if err := utils.SaveFile(FileTracking.FolderId, file.Header.Filename, &file.File); err != nil {
+		if err := utils.SaveFile(FileTracking.FolderId, file.Header.Filename, file.File); err != nil {
 
 			return Files{
 				Error:   err.Error(),
