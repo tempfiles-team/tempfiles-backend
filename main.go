@@ -2,11 +2,14 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-fuego/fuego"
 	"github.com/robfig/cron"
+	"github.com/rs/cors"
 
 	_ "github.com/joho/godotenv/autoload"
 	controller "github.com/tempfiles-Team/tempfiles-backend/controllers"
@@ -16,16 +19,22 @@ import (
 
 func main() {
 
-	s := fuego.NewServer()
+	if os.Getenv("BACKEND_PORT") == "" {
+		os.Setenv("BACKEND_PORT", "5000")
+	}
 
-	// app := gin.Default()
+	port, _ := strconv.Atoi(os.Getenv("BACKEND_PORT"))
+	s := fuego.NewServer(
+		// string to int
+		fuego.WithPort(port),
+		fuego.WithCorsMiddleware(cors.New(cors.Options{
+			AllowedOrigins: []string{"*"},
+			AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodDelete},
+			AllowedHeaders: []string{"Origin", "Content-Type", "Accept", "X-Download-Limit", "X-Time-Limit", "X-Hidden"},
+		}).Handler),
+	)
+
 	// app.Use(limits.RequestSizeLimiter(int64(math.Pow(1024, 3)))) // 1 == 1byte, = 1GB
-
-	// config := cors.DefaultConfig()
-	// config.AllowAllOrigins = true
-	// config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "X-Download-Limit", "X-Time-Limit", "X-Hidden"}
-	// config.AllowMethods = []string{"GET", "POST", "DELETE"}
-	// app.Use(cors.New(config))
 
 	terminator := cron.New()
 
@@ -152,21 +161,7 @@ func main() {
 	// 	}
 	// })
 
-	// app.GET("/list", file.ListHandler)
-	// app.POST("/upload", file.UploadHandler)
-
-	// app.GET("/file/:id", file.FileHandler)
-
-	// app.GET("/dl/:id/:name", file.DownloadHandler)
-	// app.DELETE("/del/:id", file.DeleteHandler)
-
 	controller.FilesRessources{}.Routes(s)
-
-	// if os.Getenv("BACKEND_PORT") == "" {
-	// 	os.Setenv("BACKEND_PORT", "5000")
-	// }
-
-	// log.Fatal(app.Run(fmt.Sprintf(":%s", os.Getenv("BACKEND_PORT"))))
 
 	s.Run()
 	terminator.Stop()
