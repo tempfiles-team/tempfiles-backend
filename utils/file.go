@@ -7,9 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/tempfiles-Team/tempfiles-backend/file"
 )
+
+type FileListResponse struct {
+	FileName    string `json:"fileName"`
+	FileSize    int64  `json:"fileSize"`
+	DownloadUrl string `json:"downloadUrl"`
+}
 
 func CheckIsFileExist(folderId, fileName string) bool {
 	if _, err := os.Stat("tmp/" + folderId + "/" + fileName); os.IsNotExist(err) {
@@ -18,16 +22,16 @@ func CheckIsFileExist(folderId, fileName string) bool {
 	return true
 }
 
-func GetFiles(folderId, baseUrl string) ([]file.FileListResponse, error) {
+func GetFiles(folderId string) ([]FileListResponse, error) {
 	// return filenames, file sizes
-	var files []file.FileListResponse
+	var files []FileListResponse
 
 	err := filepath.Walk("tmp/"+folderId, func(path string, info os.FileInfo, err error) error {
 		if path != "tmp/"+folderId {
-			files = append(files, file.FileListResponse{
+			files = append(files, FileListResponse{
 				FileName:    filepath.Base(path),
 				FileSize:    info.Size(),
-				DownloadUrl: baseUrl + "/dl/" + folderId + "/" + strings.ReplaceAll(url.PathEscape(filepath.Base(path)), "+", "%20"),
+				DownloadUrl: "/dl/" + folderId + "/" + strings.ReplaceAll(url.PathEscape(filepath.Base(path)), "+", "%20"),
 			})
 		}
 		return nil

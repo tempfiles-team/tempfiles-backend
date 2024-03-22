@@ -11,7 +11,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	controller "github.com/tempfiles-Team/tempfiles-backend/controllers"
 	"github.com/tempfiles-Team/tempfiles-backend/database"
-	"github.com/tempfiles-Team/tempfiles-backend/file"
+	"github.com/tempfiles-Team/tempfiles-backend/utils"
 )
 
 func main() {
@@ -65,7 +65,7 @@ func main() {
 
 	var err error
 
-	if file.CheckTmpFolder() != nil {
+	if utils.CheckTmpFolder() != nil {
 		log.Fatalf("tmp folder error: %v", err)
 	}
 

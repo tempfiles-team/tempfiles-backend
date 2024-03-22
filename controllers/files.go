@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +54,7 @@ func (rs FilesRessources) getFiles(c fuego.ContextNoBody) (Files, error) {
 	return rs.FilesService.GetFiles(c.PathParam("id"))
 }
 
-func (rs FilesRessources) deleteFiles(c *fuego.ContextNoBody) (any, error) {
+func (rs FilesRessources) deleteFiles(c *fuego.ContextNoBody) (Files, error) {
 	return rs.FilesService.DeleteFiles(c.PathParam("id"))
 }
 
@@ -85,9 +86,43 @@ type RealFilesService struct {
 }
 
 func (s RealFilesService) GetFiles(id string) (Files, error) {
-	// TODO implement
 
-	return Files{}, nil
+	FileTracking := database.FileTracking{
+		FolderId: id,
+	}
+
+	has, err := database.Engine.Get(&FileTracking)
+
+	if err != nil {
+		return Files{
+			Message: "db query error",
+		}, err
+	}
+
+	if !has {
+		return Files{
+			Message: "file not found",
+		}, nil
+	}
+
+	// scheme := "http"
+	// if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
+	// 	scheme = "https"
+	// }
+
+	// baseUrl := scheme + "://" + c.Request.Host
+
+	if files, err := utils.GetFiles(FileTracking.FolderId); err != nil {
+		return Files{
+			Message: "folder not found",
+		}, nil
+	} else {
+		log.Println("✨  File found: ", FileTracking.FolderId)
+		return Files{
+			Data:    files,
+			Message: "file found",
+		}, nil
+	}
 }
 
 func (s RealFilesService) DownloadFile(id string, name string) (path string, error error) {
@@ -277,7 +312,46 @@ func (s RealFilesService) GetAllFiles() (Files, error) {
 	}, nil
 }
 
-func (s RealFilesService) DeleteFiles(id string) (any, error) {
-	// TODO implement
-	return nil, nil
+func (s RealFilesService) DeleteFiles(id string) (Files, error) {
+	FileTracking := database.FileTracking{
+		FolderId: id,
+	}
+
+	has, err := database.Engine.Get(&FileTracking)
+
+	if err != nil {
+		return Files{
+			Message: "db query error",
+			Error:   err.Error(),
+		}, nil
+	}
+
+	if !has {
+		return Files{
+			Message: "file not found",
+			Error:   "true",
+		}, nil
+	}
+
+	if err := os.RemoveAll("tmp/" + FileTracking.FolderId); err != nil {
+
+		return Files{
+			Message: "file delete error",
+			Error:   err.Error(),
+		}, nil
+	}
+
+	if _, err := database.Engine.Delete(&FileTracking); err != nil {
+
+		return Files{
+			Message: "db delete error",
+			Error:   err.Error(),
+		}, nil
+	}
+
+	log.Printf("🗑️  Delete this folder: %s\n", FileTracking.FolderId)
+
+	return Files{
+		Message: "File deleted successfully",
+	}, nil
 }
