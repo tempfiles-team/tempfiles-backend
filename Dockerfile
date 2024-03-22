@@ -1,19 +1,22 @@
 # Step 1: Modules caching
-FROM golang:1.19.4-alpine as modules
+FROM --platform=$BUILDPLATFORM golang:1.19.4-alpine as modules
 COPY go.mod go.sum /modules/
 WORKDIR /modules
 RUN go mod download
 
 # Step 2: Builder
-FROM golang:1.19.4-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.19.4-alpine AS builder
 COPY --from=modules /go/pkg /go/pkg
 COPY . /app
 ENV CGO_ENABLED=0
 WORKDIR /app
-RUN go build -o /bin/app .
+ARG TARGETOS TARGETARCH 
+ENV CGO_ENABLED=0
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/server .
 
 # GOPATH for scratch images is /
 FROM scratch
-COPY --from=builder /bin/app /app
+WORKDIR /app
+COPY --from=builder /app/server /app/server
 EXPOSE 5000
-CMD ["/app"]
+CMD ./server
