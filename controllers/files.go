@@ -3,7 +3,10 @@ package controller
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-fuego/fuego"
@@ -32,7 +35,7 @@ func (rs FilesRessources) Routes(s *fuego.Server) {
 	fuego.Get(filesGroup, "/", rs.getAllFiles)
 	fuego.Post(filesGroup, "/", rs.postFiles)
 
-	fuego.Get(filesGroup, "/{id}/{name}", rs.getFiles)
+	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile)
 	fuego.Get(filesGroup, "/{id}", rs.getFiles)
 	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles)
 }
@@ -54,11 +57,27 @@ func (rs FilesRessources) deleteFiles(c *fuego.ContextNoBody) (any, error) {
 	return rs.FilesService.DeleteFiles(c.PathParam("id"))
 }
 
+func (rs FilesRessources) downloadFile(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	name := r.PathValue("name")
+
+	path, err := rs.FilesService.DownloadFile(id, name)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(name), "+", "%20"))
+	http.ServeFile(w, r, path)
+}
+
 type FilesService interface {
 	GetFiles(id string) (Files, error)
 	CreateFiles(FilesCreate) (Files, error)
 	GetAllFiles() ([]Files, error)
 	DeleteFiles(id string) (any, error)
+	DownloadFile(id string, name string) (Files, error)
 }
 
 type RealFilesService struct {
@@ -69,6 +88,49 @@ func (s RealFilesService) GetFiles(id string) (Files, error) {
 	// TODO implement
 
 	return Files{}, nil
+}
+
+func (s RealFilesService) DownloadFile(id string, name string) (path string, error error) {
+
+	FileTracking := database.FileTracking{
+		FolderId: id,
+	}
+
+	has, err := database.Engine.Get(&FileTracking)
+
+	if err != nil {
+		return "", err
+	}
+
+	if !has {
+		return "", fmt.Errorf("folder not found")
+	}
+
+	if !utils.CheckIsFileExist(FileTracking.FolderId, name) {
+		return "", fmt.Errorf("file not found")
+	}
+
+	// db DownloadCount +1
+	FileTracking.DownloadCount++
+	if _, err := database.Engine.ID(FileTracking.Id).Update(&FileTracking); err != nil {
+
+		return "", err
+	}
+
+	if FileTracking.DownloadLimit != 0 && FileTracking.DownloadCount >= FileTracking.DownloadLimit {
+
+		FileTracking.IsDeleted = true
+
+		log.Printf("🗑️  Set this folder for deletion: %s \n", FileTracking.FolderId)
+		if _, err := database.Engine.ID(FileTracking.Id).Cols("Is_deleted").Update(&FileTracking); err != nil {
+
+			return "", err
+		}
+	}
+
+	log.Printf("📥️  Successfully downloaded %s, %s\n", FileTracking.FolderId, name)
+
+	return "tmp/" + FileTracking.FolderId + "/" + name, nil
 }
 
 func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, error) {
