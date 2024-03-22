@@ -82,84 +82,9 @@ func main() {
 		log.Fatalf("failed to create db engine: %v", err)
 	}
 
-	// app.GET("/", func(c *gin.Context) {
-	// 	c.JSON(200, gin.H{
-	// 		"message": "api is working normally :)",
-	// 	})
-	// })
-
-	// app.GET("/info", func(c *gin.Context) {
-	// 	apiName := c.Query("api")
-
-	// 	scheme := "http"
-	// 	if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
-	// 		scheme = "https"
-	// 	}
-
-	// 	baseUrl := scheme + "://" + c.Request.Host
-
-	// 	switch apiName {
-	// 	case "upload":
-	// 		c.JSON(200, gin.H{
-	// 			"apiName": "/upload",
-	// 			"method":  "POST",
-	// 			"desc":    "특정 파일을 서버에 업로드합니다.",
-	// 			"command": "curl -LX POST -F 'file=@[filepath or filename]' " + baseUrl + "/upload",
-	// 		})
-	// 	case "list":
-	// 		c.JSON(200, gin.H{
-	// 			"apiName": "/list",
-	// 			"method":  "GET",
-	// 			"desc":    "서버에 존재하는 파일 리스트를 반환합니다.",
-	// 			"command": "curl -L " + baseUrl + "/list",
-	// 		})
-	// 	case "file":
-	// 		c.JSON(200, gin.H{
-	// 			"apiName": "/file/[file_id]",
-	// 			"method":  "GET",
-	// 			"desc":    "서버에 존재하는 특정 파일에 대한 세부 정보를 반환합니다.",
-	// 			"command": "curl -L " + baseUrl + "/file/[file_id]",
-	// 		})
-	// 	case "del":
-	// 		c.JSON(200, gin.H{
-	// 			"apiName": "/del/[file_id]",
-	// 			"method":  "DELETE",
-	// 			"desc":    "서버에 존재하는 특정 파일을 삭제합니다.",
-	// 			"command": "curl -LX DELETE " + baseUrl + "/del/[file_id]",
-	// 		})
-	// 	case "dl":
-	// 		c.JSON(200, gin.H{
-	// 			"apiName": "/dl/[file_id]",
-	// 			"method":  "GET",
-	// 			"desc":    "서버에 존재하는 특정 파일을 다운로드 합니다.",
-	// 			"command": "curl -LO " + baseUrl + "/dl/[file_id]",
-	// 		})
-	// 	default:
-	// 		c.JSON(200, []gin.H{
-	// 			{
-	// 				"apiUrl":     baseUrl + "/upload",
-	// 				"apiHandler": "upload",
-	// 			},
-	// 			{
-
-	// 				"apiUrl":     baseUrl + "/list",
-	// 				"apiHandler": "list",
-	// 			},
-	// 			{
-	// 				"apiUrl":     baseUrl + "/file/[file_id]",
-	// 				"apiHandler": "file",
-	// 			},
-	// 			{
-	// 				"apiUrl":     baseUrl + "/del/[file_id]",
-	// 				"apiHandler": "del",
-	// 			},
-	// 			{
-	// 				"apiUrl":     baseUrl + "/dl/[file_id]",
-	// 				"apiHandler": "dl",
-	// 			},
-	// 		})
-	// 	}
-	// })
+	fuego.Get(s, "/", func(c fuego.ContextNoBody) (string, error) {
+		return "TEMPFILES API WORKING 🚀\nIf you want to use the API, go to '/swagger'", nil
+	})
 
 	controller.FilesRessources{}.Routes(s)
 

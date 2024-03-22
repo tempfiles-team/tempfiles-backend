@@ -32,11 +32,9 @@ type FilesCreate struct {
 
 func (rs FilesRessources) Routes(s *fuego.Server) {
 	filesGroup := fuego.Group(s, "/files")
-
 	fuego.Get(filesGroup, "/", rs.getAllFiles)
 	fuego.Post(filesGroup, "/", rs.postFiles)
-
-	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile)
+	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile).Tags("files")
 	fuego.Get(filesGroup, "/{id}", rs.getFiles)
 	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles)
 }
