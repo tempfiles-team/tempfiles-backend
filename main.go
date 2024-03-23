@@ -48,7 +48,13 @@ func main() {
 		return "TEMPFILES API WORKING 🚀\nIf you want to use the API, go to '/swagger'", nil
 	})
 
-	controller.FilesRessources{}.Routes(s)
+	v2 := fuego.Group(s, "/v2").Tags("files v2")
+	controller.FilesRessources{}.RoutesV2(v2)
+
+	v1 := fuego.Group(s, "/v1").Tags("files v1")
+	v1wv := fuego.Group(s, "/").Tags("files v1 (without version)")
+	controller.FilesRessources{}.RoutesV1(v1wv)
+	controller.FilesRessources{}.RoutesV1(v1)
 
 	s.Run()
 }

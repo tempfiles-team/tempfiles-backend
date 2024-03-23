@@ -30,13 +30,21 @@ type FilesCreate struct {
 	Message string `json:"message"`
 }
 
-func (rs FilesRessources) Routes(s *fuego.Server) {
+func (rs FilesRessources) RoutesV2(s *fuego.Server) {
 	filesGroup := fuego.Group(s, "/files")
 	fuego.Get(filesGroup, "/", rs.getAllFiles)
 	fuego.Post(filesGroup, "/", rs.postFiles)
-	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile).Tags("files")
+	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile)
 	fuego.Get(filesGroup, "/{id}", rs.getFiles)
 	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles)
+}
+
+func (rs FilesRessources) RoutesV1(s *fuego.Server) {
+	fuego.Get(s, "/list", rs.getAllFiles)
+	fuego.Post(s, "/upload", rs.postFiles)
+	fuego.GetStd(s, "/dl/{id}/{name}", rs.downloadFile)
+	fuego.Get(s, "/file/{id}", rs.getFiles)
+	fuego.Delete(s, "/del/{id}", rs.deleteFiles)
 }
 
 func (rs FilesRessources) getAllFiles(c fuego.ContextNoBody) (Files, error) {
