@@ -15,7 +15,7 @@ ENV CGO_ENABLED=0
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/server .
 
 # GOPATH for scratch images is /
-FROM scratch
+FROM alpine
 WORKDIR /app
 COPY --from=builder /app/server /app/server
 EXPOSE 5000
