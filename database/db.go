@@ -12,6 +12,12 @@ import (
 	"xorm.io/xorm"
 )
 
+type FileListResponse struct {
+	FileName    string `json:"fileName"`
+	FileSize    int64  `json:"fileSize"`
+	DownloadUrl string `json:"downloadUrl"`
+}
+
 type FileTracking struct {
 	Id         int64  `json:"-"`
 	FolderHash string `json:"-"`
@@ -24,6 +30,8 @@ type FileTracking struct {
 	DownloadLimit int64     `json:"downloadLimit"`
 	UploadDate    time.Time `json:"uploadDate"`
 	ExpireTime    time.Time `json:"expireTime"`
+
+	Files []FileListResponse `json:"files"`
 }
 
 var Engine *xorm.Engine

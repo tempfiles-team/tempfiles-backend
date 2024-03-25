@@ -111,21 +111,16 @@ func (s RealFilesService) GetFiles(id string) (Files, error) {
 		}, nil
 	}
 
-	// scheme := "http"
-	// if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
-	// 	scheme = "https"
-	// }
-
-	// baseUrl := scheme + "://" + c.Request.Host
-
 	if files, err := utils.GetFiles(FileTracking.FolderId); err != nil {
 		return Files{
 			Message: "folder not found",
 		}, nil
 	} else {
 		log.Println("✨  File found: ", FileTracking.FolderId)
+
+		FileTracking.Files = files
 		return Files{
-			Data:    files,
+			Data:    FileTracking,
 			Message: "file found",
 		}, nil
 	}
