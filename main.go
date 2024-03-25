@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/go-fuego/fuego"
 	"github.com/rs/cors"
@@ -34,9 +33,9 @@ func main() {
 		os.Setenv("BACKEND_PORT", "5000")
 	}
 
-	port, _ := strconv.Atoi(os.Getenv("BACKEND_PORT"))
+	port := os.Getenv("BACKEND_PORT")
 	s := fuego.NewServer(
-		fuego.WithPort(port),
+		fuego.WithAddr("0.0.0.0:"+port),
 		fuego.WithCorsMiddleware(cors.New(cors.Options{
 			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodDelete},
