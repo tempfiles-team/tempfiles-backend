@@ -32,8 +32,8 @@ func main() {
 	if os.Getenv("BACKEND_PORT") == "" {
 		os.Setenv("BACKEND_PORT", "5000")
 	}
-
 	port := os.Getenv("BACKEND_PORT")
+
 	s := fuego.NewServer(
 		fuego.WithAddr("0.0.0.0:"+port),
 		fuego.WithCorsMiddleware(cors.New(cors.Options{
