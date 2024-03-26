@@ -41,7 +41,13 @@ func (rs FilesRessources) RoutesV2(s *fuego.Server) {
 
 func (rs FilesRessources) RoutesV1(s *fuego.Server) {
 	fuego.Get(s, "/list", rs.getAllFiles)
-	fuego.Post(s, "/upload", rs.postFiles)
+
+	fuego.Post(s, "/upload", rs.postFiles).
+		Description("Upload files").
+		Header("X-Download-Limit", "Download limit").
+		Header("X-Time-Limit", "Time limit").
+		Header("X-Hidden", "Hidden")
+
 	fuego.GetStd(s, "/dl/{id}/{name}", rs.downloadFile)
 	fuego.Get(s, "/file/{id}", rs.getFiles)
 	fuego.Delete(s, "/del/{id}", rs.deleteFiles)
