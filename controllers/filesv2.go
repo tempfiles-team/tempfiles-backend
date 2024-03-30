@@ -20,10 +20,18 @@ type FilesRessources struct {
 	FilesService RealFilesService
 }
 
+type File struct {
+	database.FileTracking
+
+	Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
 type Files struct {
-	Data    interface{} `json:"data"`
-	Error   string      `json:"error"`
-	Message string      `json:"message"`
+	List []database.FileTracking `json:"list"`
+
+	Error   string `json:"error"`
+	Message string `json:"message"`
 }
 
 type FilesCreate struct {
@@ -31,12 +39,12 @@ type FilesCreate struct {
 }
 
 func (rs FilesRessources) RoutesV2(s *fuego.Server) {
-	filesGroup := fuego.Group(s, "/files")
-	fuego.Get(filesGroup, "/", rs.getAllFiles)
-	fuego.Post(filesGroup, "/", rs.postFiles)
-	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile)
-	fuego.Get(filesGroup, "/{id}", rs.getFiles)
-	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles)
+	filesGroup := fuego.Group(s, "/files").Tags("default")
+	fuego.Get(filesGroup, "/", rs.getAllFiles).Tags("default")
+	fuego.Post(filesGroup, "/", rs.postFiles).Tags("default")
+	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile).Tags("default")
+	fuego.Get(filesGroup, "/{id}", rs.getFiles).Tags("default")
+	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles).Tags("default")
 }
 
 func (rs FilesRessources) RoutesV1(s *fuego.Server) {
@@ -57,16 +65,16 @@ func (rs FilesRessources) getAllFiles(c fuego.ContextNoBody) (Files, error) {
 	return rs.FilesService.GetAllFiles()
 }
 
-func (rs FilesRessources) postFiles(c *fuego.ContextWithBody[any]) (Files, error) {
+func (rs FilesRessources) postFiles(c *fuego.ContextWithBody[any]) (File, error) {
 
 	return rs.FilesService.CreateFiles(c)
 }
 
-func (rs FilesRessources) getFiles(c fuego.ContextNoBody) (Files, error) {
+func (rs FilesRessources) getFiles(c fuego.ContextNoBody) (File, error) {
 	return rs.FilesService.GetFiles(c.PathParam("id"))
 }
 
-func (rs FilesRessources) deleteFiles(c *fuego.ContextNoBody) (Files, error) {
+func (rs FilesRessources) deleteFiles(c *fuego.ContextNoBody) (File, error) {
 	return rs.FilesService.DeleteFiles(c.PathParam("id"))
 }
 
@@ -86,18 +94,18 @@ func (rs FilesRessources) downloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 type FilesService interface {
-	GetFiles(id string) (Files, error)
-	CreateFiles(FilesCreate) (Files, error)
-	GetAllFiles() ([]Files, error)
+	GetFiles(id string) (File, error)
+	CreateFiles(FilesCreate) (File, error)
+	GetAllFiles() (Files, error)
 	DeleteFiles(id string) (any, error)
-	DownloadFile(id string, name string) (Files, error)
+	DownloadFile(id string, name string) (File, error)
 }
 
 type RealFilesService struct {
 	FilesService
 }
 
-func (s RealFilesService) GetFiles(id string) (Files, error) {
+func (s RealFilesService) GetFiles(id string) (File, error) {
 
 	FileTracking := database.FileTracking{
 		FolderId: id,
@@ -106,29 +114,33 @@ func (s RealFilesService) GetFiles(id string) (Files, error) {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return Files{
+		return File{
 			Message: "db query error",
 		}, err
 	}
 
 	if !has {
-		return Files{
+		return File{
 			Message: "file not found",
 		}, nil
 	}
 
 	if files, err := utils.GetFiles(FileTracking.FolderId); err != nil {
-		return Files{
+		return File{
 			Message: "folder not found",
 		}, nil
 	} else {
 		log.Println("✨  File found: ", FileTracking.FolderId)
 
 		FileTracking.Files = files
-		return Files{
-			Data:    FileTracking,
-			Message: "file found",
-		}, nil
+
+		repons := File{
+			Message: "File found",
+		}
+
+		repons.FileTracking = FileTracking
+
+		return repons, nil
 	}
 }
 
@@ -175,11 +187,11 @@ func (s RealFilesService) DownloadFile(id string, name string) (path string, err
 	return "tmp/" + FileTracking.FolderId + "/" + name, nil
 }
 
-func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, error) {
+func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, error) {
 
 	err := c.Request().ParseMultipartForm(10 << 20) // limit file size to 10MB
 	if err != nil {
-		return Files{
+		return File{
 			Message: fmt.Sprintf("Error parsing file: %v", err),
 		}, nil
 	}
@@ -206,14 +218,14 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 	// Multipart File And Header
 	MFAHASH, err := utils.FormFiles(c.Request(), "file")
 	if err != nil {
-		return Files{
+		return File{
 			Message: fmt.Sprintf("Please send the file using the “file” field in multipart/form-data.: %v", err),
 		}, nil
 	}
 
 	FolderHash, err := utils.GenIdFormMulitpart(MFAHASH)
 	if err != nil {
-		return Files{
+		return File{
 			Message: fmt.Sprintf("folder id generation error: %v", err),
 		}, nil
 	}
@@ -221,7 +233,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 	isExist, err := database.Engine.Exist(&database.FileTracking{FolderHash: FolderHash})
 
 	if err != nil {
-		return Files{
+		return File{
 			Error:   err.Error(),
 			Message: fmt.Sprintf("database exist error: %v", err),
 		}, nil
@@ -234,21 +246,24 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 		_, err := database.Engine.Get(&FileTracking)
 		if err != nil {
 
-			return Files{
+			return File{
 				Error:   err.Error(),
 				Message: fmt.Sprintf("database get error: %v", err),
 			}, nil
 		}
 
-		return Files{
-			Data:    FileTracking,
+		resp := File{
 			Message: fmt.Sprintf("File %s already exists", FileTracking.FolderHash),
-		}, nil
+		}
+
+		resp.FileTracking = FileTracking
+
+		return resp, nil
 	}
 
 	MFAH, err := utils.FormFiles(c.Request(), "file")
 	if err != nil {
-		return Files{
+		return File{
 			Message: fmt.Sprintf("Please send the file using the “file” field in multipart/form-data.: %v", err),
 		}, nil
 	}
@@ -265,7 +280,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 
 	if utils.CheckFileFolder(FileTracking.FolderId) != nil {
 
-		return Files{
+		return File{
 			Error:   err.Error(),
 			Message: fmt.Sprintf("file folder duplication error: %v", err),
 		}, nil
@@ -276,7 +291,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 
 		if err := utils.SaveFile(FileTracking.FolderId, file.Header.Filename, file.File); err != nil {
 
-			return Files{
+			return File{
 				Error:   err.Error(),
 				Message: fmt.Sprintf("file save error: %v", err),
 			}, nil
@@ -286,7 +301,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 	_, err = database.Engine.Insert(FileTracking)
 	if err != nil {
 
-		return Files{
+		return File{
 			Error:   err.Error(),
 			Message: fmt.Sprintf("database insert error: %v", err),
 		}, nil
@@ -294,11 +309,13 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (Files, err
 
 	log.Printf("🥰  Successfully uploaded %s, %d files\n", FileTracking.FolderId, FileTracking.FileCount)
 
-	return Files{
-		Data:    FileTracking,
+	resp := File{
 		Message: fmt.Sprintf("File %s uploaded successfully", FileTracking.FolderHash),
-	}, nil
+	}
 
+	resp.FileTracking = *FileTracking
+
+	return resp, nil
 }
 
 func (s RealFilesService) GetAllFiles() (Files, error) {
@@ -314,12 +331,12 @@ func (s RealFilesService) GetAllFiles() (Files, error) {
 	}
 
 	return Files{
-		Data:    files,
+		List:    files,
 		Message: "File list successfully",
 	}, nil
 }
 
-func (s RealFilesService) DeleteFiles(id string) (Files, error) {
+func (s RealFilesService) DeleteFiles(id string) (File, error) {
 	FileTracking := database.FileTracking{
 		FolderId: id,
 	}
@@ -327,14 +344,14 @@ func (s RealFilesService) DeleteFiles(id string) (Files, error) {
 	has, err := database.Engine.Get(&FileTracking)
 
 	if err != nil {
-		return Files{
+		return File{
 			Message: "db query error",
 			Error:   err.Error(),
 		}, nil
 	}
 
 	if !has {
-		return Files{
+		return File{
 			Message: "file not found",
 			Error:   "true",
 		}, nil
@@ -342,7 +359,7 @@ func (s RealFilesService) DeleteFiles(id string) (Files, error) {
 
 	if err := os.RemoveAll("tmp/" + FileTracking.FolderId); err != nil {
 
-		return Files{
+		return File{
 			Message: "file delete error",
 			Error:   err.Error(),
 		}, nil
@@ -350,7 +367,7 @@ func (s RealFilesService) DeleteFiles(id string) (Files, error) {
 
 	if _, err := database.Engine.Delete(&FileTracking); err != nil {
 
-		return Files{
+		return File{
 			Message: "db delete error",
 			Error:   err.Error(),
 		}, nil
@@ -358,7 +375,7 @@ func (s RealFilesService) DeleteFiles(id string) (Files, error) {
 
 	log.Printf("🗑️  Delete this folder: %s\n", FileTracking.FolderId)
 
-	return Files{
+	return File{
 		Message: "File deleted successfully",
 	}, nil
 }

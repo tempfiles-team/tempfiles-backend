@@ -45,9 +45,9 @@ func main() {
 
 	fuego.Get(s, "/", func(c fuego.ContextNoBody) (string, error) {
 		return "TEMPFILES API WORKING 🚀\nIf you want to use the API, go to '/swagger'", nil
-	})
+	}).Tags("default")
 
-	v1wv := fuego.Group(s, "/").Tags("files")
+	v1wv := fuego.Group(s, "/")
 	controller.FilesRessources{}.RoutesV1(v1wv)
 
 	s.Run()
