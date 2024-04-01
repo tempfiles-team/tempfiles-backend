@@ -38,15 +38,6 @@ type FilesCreate struct {
 	Message string `json:"message"`
 }
 
-func (rs FilesRessources) RoutesV2(s *fuego.Server) {
-	filesGroup := fuego.Group(s, "/files").Tags("default")
-	fuego.Get(filesGroup, "/", rs.getAllFiles).Tags("default")
-	fuego.Post(filesGroup, "/", rs.postFiles).Tags("default")
-	fuego.GetStd(filesGroup, "/{id}/{name}", rs.downloadFile).Tags("default")
-	fuego.Get(filesGroup, "/{id}", rs.getFiles).Tags("default")
-	fuego.Delete(filesGroup, "/{id}", rs.deleteFiles).Tags("default")
-}
-
 func (rs FilesRessources) RoutesV1(s *fuego.Server) {
 	fuego.Get(s, "/list", rs.getAllFiles)
 
@@ -57,6 +48,7 @@ func (rs FilesRessources) RoutesV1(s *fuego.Server) {
 		Header("X-Hidden", "Hidden")
 
 	fuego.GetStd(s, "/dl/{id}/{name}", rs.downloadFile)
+	fuego.GetStd(s, "/view/{id}/{name}", rs.ViewFile)
 	fuego.Get(s, "/file/{id}", rs.getFiles)
 	fuego.Delete(s, "/del/{id}", rs.deleteFiles)
 }
@@ -90,6 +82,20 @@ func (rs FilesRessources) downloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Disposition", "attachment; filename="+strings.ReplaceAll(url.PathEscape(name), "+", "%20"))
+	http.ServeFile(w, r, path)
+}
+
+func (rs FilesRessources) ViewFile(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	name := r.PathValue("name")
+
+	path, err := rs.FilesService.DownloadFile(id, name)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.ServeFile(w, r, path)
 }
 
