@@ -2,10 +2,13 @@ package controller
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -95,8 +98,28 @@ func (rs FilesRessources) ViewFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	mimeType := mime.TypeByExtension(filepath.Ext(name))
 
-	http.ServeFile(w, r, path)
+	// 만약 텍스트 파일인 경우에 (코드 및 기타 텍스트 파일) 파일을 열어서 plain text로 보여줍니다.
+	if strings.Contains(mimeType, "text") {
+		file, err := os.Open(path)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		defer file.Close()
+		w.Header().Set("Content-Type", "text/plain")
+		// file를 읽어서 response에 쓰기
+		if _, err := io.Copy(w, file); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	} else {
+		http.ServeFile(w, r, path)
+	}
+
 }
 
 type FilesService interface {
