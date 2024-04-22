@@ -281,8 +281,32 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, erro
 			}, nil
 		}
 
+		FileTracking.ExpireTime = expireTimeDate.Unix()
+		if _, err := database.Engine.ID(FileTracking.Id).Cols("expire_time").Update(&FileTracking); err != nil {
+			resp := File{
+				Error:   err.Error(),
+				Message: fmt.Sprintf("database update error: %v", err),
+			}
+
+			resp.FileTracking = FileTracking
+
+			return resp, nil
+		}
+
+		FileTracking.DownloadCount = 0
+		if _, err := database.Engine.ID(FileTracking.Id).Cols("download_count").Update(&FileTracking); err != nil {
+			resp := File{
+				Error:   err.Error(),
+				Message: fmt.Sprintf("database update error: %v", err),
+			}
+
+			resp.FileTracking = FileTracking
+
+			return resp, nil
+		}
+
 		resp := File{
-			Message: fmt.Sprintf("File %s already exists", FileTracking.FolderHash),
+			Message: fmt.Sprintf("File %s already exists, reset time limit and download count.", FileTracking.FolderHash[:5]),
 		}
 
 		resp.FileTracking = FileTracking
@@ -304,7 +328,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, erro
 		FolderHash:    FolderHash,
 		UploadDate:    time.Now(),
 		DownloadLimit: int64(downloadLimit),
-		ExpireTime:    expireTimeDate,
+		ExpireTime:    expireTimeDate.Unix(),
 	}
 
 	if utils.CheckFileFolder(FileTracking.FolderId) != nil {
@@ -339,7 +363,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, erro
 	log.Printf("🥰  Successfully uploaded %s, %d files\n", FileTracking.FolderId, FileTracking.FileCount)
 
 	resp := File{
-		Message: fmt.Sprintf("File %s uploaded successfully", FileTracking.FolderHash),
+		Message: fmt.Sprintf("File %s uploaded successfully", FileTracking.FolderHash[:5]),
 	}
 
 	resp.FileTracking = *FileTracking

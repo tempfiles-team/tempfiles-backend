@@ -29,7 +29,7 @@ type FileTracking struct {
 	DownloadCount int64     `json:"downloadCount"`
 	DownloadLimit int64     `json:"downloadLimit"`
 	UploadDate    time.Time `json:"uploadDate"`
-	ExpireTime    time.Time `json:"expireTime"`
+	ExpireTime    int64     `json:"expireTime"`
 
 	Files []FileListResponse `json:"files"`
 }

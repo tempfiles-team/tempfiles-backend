@@ -12,10 +12,10 @@ import (
 func Crontab() {
 	terminator := cron.New()
 
-	terminator.AddFunc("1 */5 * * *", func() {
+	terminator.AddFunc("@every 30s", func() {
 		log.Println("⏲️  Check for expired files", time.Now().Format("2006-01-02 15:04:05"))
 		var files []database.FileTracking
-		if err := database.Engine.Where("expire_time < ? and is_deleted = ?", time.Now(), false).Find(&files); err != nil {
+		if err := database.Engine.Where("expire_time < ? and is_deleted = ?", time.Now().Unix(), false).Find(&files); err != nil {
 			log.Println("cron db query error", err.Error())
 		}
 		for _, file := range files {
@@ -27,7 +27,7 @@ func Crontab() {
 		}
 	})
 
-	terminator.AddFunc("1 */20 * * *", func() {
+	terminator.AddFunc("@every 1m", func() {
 		log.Println("⏲️  Check which files need to be deleted", time.Now().Format("2006-01-02 15:04:05"))
 		var files []database.FileTracking
 		if err := database.Engine.Where("is_deleted = ?", true).Find(&files); err != nil {
@@ -45,5 +45,4 @@ func Crontab() {
 	})
 
 	terminator.Start()
-	defer terminator.Stop()
 }
