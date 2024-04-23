@@ -50,8 +50,8 @@ func CreateDBEngine() error {
 		return err
 	}
 
-	Engine.SetMaxIdleConns(20)
-	Engine.SetMaxOpenConns(20)
+	Engine.SetMaxIdleConns(1)
+	Engine.SetMaxOpenConns(1)
 	Engine.SetConnMaxLifetime(time.Minute * 5)
 
 	if err := Engine.Ping(); err != nil {
