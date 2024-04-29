@@ -109,7 +109,7 @@ func (rs FilesRessources) ViewFile(w http.ResponseWriter, r *http.Request) {
 		}
 
 		defer file.Close()
-		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Type", mimeType)
 		// file를 읽어서 response에 쓰기
 		if _, err := io.Copy(w, file); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
