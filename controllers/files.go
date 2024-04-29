@@ -321,6 +321,14 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, erro
 		}, nil
 	}
 
+	filesList := make([]database.FileListResponse, 0)
+	for _, file := range MFAH {
+		filesList = append(filesList, database.FileListResponse{
+			FileName: file.Header.Filename,
+			FileSize: file.Header.Size,
+		})
+	}
+
 	FileTracking := &database.FileTracking{
 		FileCount:     len(MFAH),
 		FolderId:      FolderHash[:5],
@@ -329,6 +337,7 @@ func (s RealFilesService) CreateFiles(c *fuego.ContextWithBody[any]) (File, erro
 		UploadDate:    time.Now(),
 		DownloadLimit: int64(downloadLimit),
 		ExpireTime:    expireTimeDate.Unix(),
+		Files:         filesList,
 	}
 
 	if utils.CheckFileFolder(FileTracking.FolderId) != nil {
